@@ -116,7 +116,7 @@ class CorsConfigTest {
 
     @Test
     void allowsCrossOriginCharmRequestWithoutCallingSupabase() throws Exception {
-        when(charmService.getActiveCharms()).thenReturn("[]");
+        when(charmService.getCatalogCharms()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/charms")
                         .header(HttpHeaders.ORIGIN, ALLOWED_ORIGIN_VITE))
