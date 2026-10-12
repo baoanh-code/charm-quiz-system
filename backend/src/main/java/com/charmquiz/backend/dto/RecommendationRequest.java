@@ -1,41 +1,18 @@
 package com.charmquiz.backend.dto;
 
-public class RecommendationRequest {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-    private String fullName;
-    private String interests;
-    private String favoriteMusic;
-    private String favoriteSport;
+import java.time.LocalDate;
+import java.util.List;
 
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getInterests() {
-        return interests;
-    }
-
-    public void setInterests(String interests) {
-        this.interests = interests;
-    }
-
-    public String getFavoriteMusic() {
-        return favoriteMusic;
-    }
-
-    public void setFavoriteMusic(String favoriteMusic) {
-        this.favoriteMusic = favoriteMusic;
-    }
-
-    public String getFavoriteSport() {
-        return favoriteSport;
-    }
-
-    public void setFavoriteSport(String favoriteSport) {
-        this.favoriteSport = favoriteSport;
-    }
+public record RecommendationRequest(
+        @NotBlank @Size(max = 200) String fullName,
+        @NotNull LocalDate birthDate,
+        @NotEmpty @Size(max = 20) List<@NotBlank @Size(max = 100) String> interests,
+        @NotBlank @Size(max = 100) String favoriteAnimal,
+        @NotBlank @Size(max = 100) String favoriteColor
+) {
 }

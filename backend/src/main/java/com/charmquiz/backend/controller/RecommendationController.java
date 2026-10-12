@@ -3,6 +3,7 @@ package com.charmquiz.backend.controller;
 import com.charmquiz.backend.dto.RecommendationRequest;
 import com.charmquiz.backend.dto.RecommendationResponse;
 import com.charmquiz.backend.service.RecommendationService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,8 +20,8 @@ public class RecommendationController {
 
     @PostMapping
     public RecommendationResponse getRecommendation(
-            @RequestBody RecommendationRequest request) {
+            @Valid @RequestBody RecommendationRequest request) {
 
-        return recommendationService.getRuleRecommendation(request);
+        return recommendationService.getRecommendations(request);
     }
 }
