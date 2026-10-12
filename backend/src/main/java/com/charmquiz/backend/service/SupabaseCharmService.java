@@ -1,5 +1,7 @@
 package com.charmquiz.backend.service;
 
+import com.charmquiz.backend.dto.CharmCatalogItemResponse;
+import com.charmquiz.backend.model.CharmStockStatus;
 import com.charmquiz.backend.model.EligibleCharm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,11 +36,29 @@ public class SupabaseCharmService {
         this.objectMapper = objectMapper;
     }
 
-    public String getActiveCharms() {
-        return restClient.get()
-                .uri("/charm?status=eq.ACTIVE&select=*")
+    public List<CharmCatalogItemResponse> getCatalogCharms() {
+        String rawJson = restClient.get()
+                .uri("/charm?status=eq.ACTIVE"
+                        + "&select=id,name,description,image_url,category,stock_status"
+                        + "&order=name.asc.nullslast,id.asc")
                 .retrieve()
                 .body(String.class);
+
+        try {
+            List<Map<String, Object>> rows = objectMapper.readValue(
+                    rawJson,
+                    new TypeReference<List<Map<String, Object>>>() {
+                    }
+            );
+
+            return rows.stream()
+                    .map(this::toCatalogItem)
+                    .toList();
+        } catch (IllegalStateException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new IllegalStateException("Failed to parse active charm catalog from Supabase", exception);
+        }
     }
 
     public List<EligibleCharm> getEligibleCharms() {
@@ -75,5 +95,31 @@ public class SupabaseCharmService {
                 (String) row.get("status"),
                 (String) row.get("stock_status")
         );
+    }
+
+    private CharmCatalogItemResponse toCatalogItem(Map<String, Object> row) {
+        String stockStatusValue = asNullableString(row.get("stock_status"));
+        CharmStockStatus stockStatus;
+        try {
+            stockStatus = CharmStockStatus.valueOf(stockStatusValue);
+        } catch (RuntimeException exception) {
+            throw new IllegalStateException(
+                    "Invalid stock_status from Supabase: " + stockStatusValue,
+                    exception
+            );
+        }
+
+        return CharmCatalogItemResponse.from(
+                asNullableString(row.get("id")),
+                asNullableString(row.get("name")),
+                asNullableString(row.get("description")),
+                asNullableString(row.get("image_url")),
+                asNullableString(row.get("category")),
+                stockStatus
+        );
+    }
+
+    private String asNullableString(Object value) {
+        return value == null ? null : value.toString();
     }
 }
