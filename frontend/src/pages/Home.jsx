@@ -1,6 +1,9 @@
 
 import { Link } from 'react-router-dom';
-import heroImage from '../assets/hero.png';
+import heroImage from '../assets/hero-heritage.jpg';
+import recommendationImage from '../assets/feature-recommendation.jpg';
+import catalogImage from '../assets/feature-catalog.jpg';
+import historyImage from '../assets/feature-history.jpg';
 import FeatureCard from '../components/FeatureCard';
 
 const features = [
@@ -11,7 +14,8 @@ const features = [
       'Answer a few quick prompts and move toward the charm that fits your purpose.',
     href: '/recommendation',
     cta: 'Start recommendation',
-    accent: 'violet',
+    accent: 'red',
+    image: recommendationImage,
   },
   {
     eyebrow: '02',
@@ -20,7 +24,8 @@ const features = [
       'Explore charm options from the home page without waiting for a guided flow.',
     href: '/catalog',
     cta: 'View catalog',
-    accent: 'teal',
+    accent: 'coral',
+    image: catalogImage,
   },
   {
     eyebrow: '03',
@@ -29,7 +34,8 @@ const features = [
       'Take a short quiz experience designed for quick mobile visits from a QR scan.',
     href: '/history-quiz',
     cta: 'Play quiz',
-    accent: 'amber',
+    accent: 'gold',
+    image: historyImage,
   },
 ];
 
@@ -38,38 +44,39 @@ function Home() {
     <div className="home-page">
       <section className="hero-section" aria-labelledby="home-title">
         <div className="hero-copy">
-          <p className="section-kicker">Charm Quiz System</p>
-          <h1 id="home-title">Find your charm, explore the story, start in seconds.</h1>
-          <p>
-            A mobile-first entry point for customers to get a charm recommendation,
-            browse the catalog, or play a quick Vietnam history quiz.
+          <p className="section-kicker hero-kicker">
+            <span aria-hidden="true">✦</span> Discover Vietnamese History
+          </p>
+          <h1 id="home-title">
+            <span>Wear a Charm.</span>
+            <em>Carry a Story.</em>
+          </h1>
+          <p className="hero-description">
+            Find the piece that connects your personality to a meaningful story.
           </p>
 
           <div className="hero-actions" aria-label="Home page actions">
             <Link className="button button--primary" to="/recommendation">
-              Get recommendation
+              Find Your Charm <span aria-hidden="true">↗</span>
             </Link>
             <Link className="button button--secondary" to="/catalog">
-              Browse catalog
+              Explore Collection
             </Link>
           </div>
         </div>
 
-        <div className="hero-visual" aria-hidden="true">
-          <img className="hero-visual__image" src={heroImage} alt="" />
-          <div className="charm-orbit">
-            <span className="charm-orbit__ring" />
-            <span className="charm-orbit__piece charm-orbit__piece--top" />
-            <span className="charm-orbit__piece charm-orbit__piece--left" />
-            <span className="charm-orbit__piece charm-orbit__piece--right" />
+        <div className="hero-media">
+          <div className="hero-visual" aria-hidden="true">
+            <img className="hero-visual__image" src={heroImage} alt="" />
+            <p className="hero-visual__caption">Inspired by<br />Vietnamese Heritage</p>
           </div>
+          <p className="hero-image-note">Images are for illustrative purposes only.</p>
         </div>
       </section>
 
       <section className="features-section" aria-labelledby="features-title">
         <div className="section-heading">
-          <p className="section-kicker">Main customer paths</p>
-          <h2 id="features-title">Choose what you want to do next</h2>
+          <h2 id="features-title">Start your <em>journey</em></h2>
         </div>
 
         <div className="feature-grid">
