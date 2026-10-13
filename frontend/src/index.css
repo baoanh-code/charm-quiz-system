@@ -1097,6 +1097,10 @@ p {
   background: var(--accent);
 }
 
+.catalog-heading__dot--stale {
+  background: var(--primary);
+}
+
 .catalog-toolbar {
   display: grid;
   gap: 0.8rem;
@@ -1285,6 +1289,19 @@ p {
 .catalog-message--error {
   padding-block: 1rem 2rem;
   color: var(--primary);
+}
+
+.catalog-message--warning {
+  padding-block: 0 1.5rem;
+  color: var(--text-strong);
+}
+
+.catalog-live-status {
+  margin-top: -0.5rem;
+  padding-bottom: 1rem;
+  color: var(--primary);
+  font-size: 0.87rem;
+  font-weight: 700;
 }
 
 .catalog-skeleton {

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { recommendationSourceLabels } from '../services/recommendationService';
 
 function RecommendationCard({ recommendation, symbol, fallback, position }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -18,7 +19,7 @@ function RecommendationCard({ recommendation, symbol, fallback, position }) {
         <p className="result-card__rank">Pick {rank ?? displayOrder ?? position}{fallback ? ' / Alternative' : ''}</p>
         <h3>{charm.name}</h3>
         {reason ? <p className="result-card__reason">{reason}</p> : null}
-        {source ? <p className="result-card__source">From {source}</p> : null}
+        {source ? <p className="result-card__source">Source: {recommendationSourceLabels[source]}</p> : null}
       </div>
     </article>
   );
