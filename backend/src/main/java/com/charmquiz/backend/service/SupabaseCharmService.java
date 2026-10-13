@@ -110,13 +110,21 @@ public class SupabaseCharmService {
         }
 
         return CharmCatalogItemResponse.from(
-                asNullableString(row.get("id")),
-                asNullableString(row.get("name")),
+                requiredCatalogString(row, "id"),
+                requiredCatalogString(row, "name"),
                 asNullableString(row.get("description")),
-                asNullableString(row.get("image_url")),
+                requiredCatalogString(row, "image_url"),
                 asNullableString(row.get("category")),
                 stockStatus
         );
+    }
+
+    private String requiredCatalogString(Map<String, Object> row, String column) {
+        String value = asNullableString(row.get(column));
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Invalid required catalog field from Supabase: " + column);
+        }
+        return value;
     }
 
     private String asNullableString(Object value) {

@@ -1,5 +1,6 @@
 package com.charmquiz.backend.service;
 
+import com.charmquiz.backend.client.AiRecommendationException;
 import com.charmquiz.backend.client.GeminiRecommendationClient;
 import com.charmquiz.backend.dto.RecommendationRequest;
 import com.charmquiz.backend.dto.RecommendationResponse;
@@ -100,6 +101,9 @@ class RecommendationServiceTest {
         assertThat(section(response, RecommendationSectionType.FAVORITE_ANIMAL).recommendations())
                 .extracting(RecommendationResponse.Item::rank)
                 .containsExactly(1, 2);
+        assertThat(section(response, RecommendationSectionType.FAVORITE_ANIMAL).recommendations())
+                .extracting(RecommendationResponse.Item::source)
+                .containsOnly(RecommendationSource.AI);
         assertThat(section(response, RecommendationSectionType.NAME).derivedValues())
                 .containsEntry("givenName", "Anh")
                 .containsEntry("initial", "A");
@@ -174,6 +178,122 @@ class RecommendationServiceTest {
         verify(geminiClient, never()).recommend(anyMap(), anyList());
     }
 
+    @Test
+    void recoverableAiFailureFallsBackLocallyWithoutEscapingTheService() {
+        when(charmService.getEligibleCharms()).thenReturn(List.of(
+                charm("music", "Music Charm", "music"),
+                charm("cat", "Cat Charm", "cat"),
+                charm("red", "Red Charm", "red")
+        ));
+        when(ruleService.getMatches(any())).thenReturn(List.of());
+        when(geminiClient.isConfigured()).thenReturn(true);
+        when(geminiClient.recommend(anyMap(), anyList()))
+                .thenThrow(new AiRecommendationException("provider timeout"));
+
+        RecommendationResponse response = service.getRecommendations(request());
+
+        assertThat(section(response, RecommendationSectionType.INTERESTS).recommendations())
+                .extracting(RecommendationResponse.Item::source)
+                .containsOnly(RecommendationSource.LOCAL_FALLBACK);
+        assertThat(section(response, RecommendationSectionType.FAVORITE_ANIMAL).recommendations())
+                .extracting(RecommendationResponse.Item::source)
+                .containsOnly(RecommendationSource.LOCAL_FALLBACK);
+        assertThat(response.sections()).hasSize(5);
+    }
+
+    @Test
+    void moreThanThreeAiIdsFallsBackAndKeepsTheFinalContract() {
+        List<EligibleCharm> catalog = List.of(
+                charm("music-a", "Music A", "music"),
+                charm("music-b", "Music B", "music"),
+                charm("music-c", "Music C", "music"),
+                charm("music-d", "Music D", "music")
+        );
+        when(charmService.getEligibleCharms()).thenReturn(catalog);
+        when(ruleService.getMatches(any())).thenReturn(List.of());
+        when(geminiClient.isConfigured()).thenReturn(true);
+        when(geminiClient.recommend(anyMap(), anyList())).thenReturn(Map.of(
+                RecommendationSectionType.INTERESTS,
+                List.of("music-a", "music-b", "music-c", "music-d")
+        ));
+
+        RecommendationResponse response = service.getRecommendations(request());
+        List<RecommendationResponse.Item> items = section(
+                response,
+                RecommendationSectionType.INTERESTS
+        ).recommendations();
+
+        assertThat(items).hasSize(3);
+        assertThat(items).extracting(RecommendationResponse.Item::source)
+                .containsOnly(RecommendationSource.LOCAL_FALLBACK);
+        assertThat(items).extracting(RecommendationResponse.Item::rank)
+                .containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void ineligibleAiCharmIdFallsBackLocally() {
+        EligibleCharm eligible = charm("music", "Music Charm", "music");
+        EligibleCharm outOfStock = new EligibleCharm(
+                "out", "Music Out", "", "", "music", "music", "ACTIVE", "OUT_OF_STOCK");
+        when(charmService.getEligibleCharms()).thenReturn(List.of(eligible, outOfStock));
+        when(ruleService.getMatches(any())).thenReturn(List.of());
+        when(geminiClient.isConfigured()).thenReturn(true);
+        when(geminiClient.recommend(anyMap(), anyList())).thenReturn(Map.of(
+                RecommendationSectionType.INTERESTS, List.of("out")
+        ));
+
+        RecommendationResponse response = service.getRecommendations(request());
+
+        assertThat(section(response, RecommendationSectionType.INTERESTS).recommendations())
+                .extracting(RecommendationResponse.Item::charmId)
+                .containsExactly("music");
+        assertThat(section(response, RecommendationSectionType.INTERESTS).recommendations())
+                .extracting(RecommendationResponse.Item::source)
+                .containsOnly(RecommendationSource.LOCAL_FALLBACK);
+    }
+
+    @Test
+    void finalRuleResultsAreDeduplicatedCappedAndSequentiallyRanked() {
+        List<EligibleCharm> catalog = List.of(
+                charm("a", "Music A", "music"),
+                charm("b", "Music B", "music"),
+                charm("c", "Music C", "music"),
+                charm("d", "Music D", "music")
+        );
+        when(charmService.getEligibleCharms()).thenReturn(catalog);
+        when(ruleService.getMatches(any())).thenReturn(List.of(
+                rule("a", 50),
+                rule("a", 40),
+                rule("b", 30),
+                rule("c", 20),
+                rule("d", 10)
+        ));
+        when(geminiClient.isConfigured()).thenReturn(false);
+
+        RecommendationResponse response = service.getRecommendations(request());
+        List<RecommendationResponse.Item> items = section(
+                response,
+                RecommendationSectionType.INTERESTS
+        ).recommendations();
+
+        assertThat(response.sections()).hasSize(5);
+        assertThat(response.sections()).extracting(RecommendationResponse.Section::type)
+                .containsExactlyElementsOf(List.of(
+                        RecommendationSectionType.NAME,
+                        RecommendationSectionType.BIRTH_DATE,
+                        RecommendationSectionType.INTERESTS,
+                        RecommendationSectionType.FAVORITE_ANIMAL,
+                        RecommendationSectionType.FAVORITE_COLOR
+                ));
+        assertThat(items).hasSize(3);
+        assertThat(items).extracting(RecommendationResponse.Item::charmId)
+                .containsExactly("a", "b", "c");
+        assertThat(items).extracting(RecommendationResponse.Item::rank)
+                .containsExactly(1, 2, 3);
+        assertThat(items).extracting(RecommendationResponse.Item::source)
+                .containsOnly(RecommendationSource.RULE);
+    }
+
     private RecommendationRequest request() {
         return new RecommendationRequest(
                 "Lâm Phú Bảo Anh",
@@ -203,6 +323,16 @@ class RecommendationServiceTest {
                 tag,
                 "ACTIVE",
                 "IN_STOCK"
+        );
+    }
+
+    private RuleRecommendation rule(String charmId, int priority) {
+        return new RuleRecommendation(
+                RecommendationSectionType.INTERESTS,
+                "INTEREST",
+                "music",
+                priority,
+                charmId
         );
     }
 }

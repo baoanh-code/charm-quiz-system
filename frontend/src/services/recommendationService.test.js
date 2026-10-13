@@ -139,3 +139,33 @@ test('rejects missing, duplicate, unknown, oversized, and invalid-source section
     assert.throws(() => normalizeGroupedRecommendation(response, {}), /Unexpected recommendation item/);
   });
 });
+
+test('rejects invalid ranks and duplicate charm IDs inside a section', async (context) => {
+  await context.test('rank must be positive', () => {
+    const response = completeResponse();
+    response.sections[0].recommendations = [item('RULE', 0)];
+    assert.throws(() => normalizeGroupedRecommendation(response, {}), /rank/i);
+  });
+
+  await context.test('rank must not be duplicated', () => {
+    const response = completeResponse();
+    const first = item('RULE', 1);
+    const second = { ...item('AI', 1), charmId: 'different-charm' };
+    response.sections[0].recommendations = [first, second];
+    assert.throws(() => normalizeGroupedRecommendation(response, {}), /rank/i);
+  });
+
+  await context.test('rank must be sequential', () => {
+    const response = completeResponse();
+    response.sections[0].recommendations = [item('RULE', 1), item('AI', 3)];
+    assert.throws(() => normalizeGroupedRecommendation(response, {}), /rank/i);
+  });
+
+  await context.test('charm ID must not be duplicated', () => {
+    const response = completeResponse();
+    const first = item('RULE', 1);
+    const second = { ...item('RULE', 2), charmId: first.charmId };
+    response.sections[0].recommendations = [first, second];
+    assert.throws(() => normalizeGroupedRecommendation(response, {}), /duplicate/i);
+  });
+});

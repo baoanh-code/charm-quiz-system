@@ -81,3 +81,27 @@ test('starting a replacement subscription removes the previous channel', () => {
   assert.equal(second.state.channelNames.length, 1);
   stopSecond();
 });
+
+test('rapid invalidations keep one channel and cleanup remains idempotent', () => {
+  const { client, state } = fakeRealtimeClient();
+  let invalidationCount = 0;
+
+  const stop = subscribeToCatalogUpdates({
+    client,
+    onInvalidate: () => { invalidationCount += 1; },
+    onStatus() {},
+  });
+
+  state.binding.callback({});
+  state.binding.callback({});
+  state.binding.callback({});
+
+  assert.equal(state.channelNames.length, 1);
+  assert.equal(invalidationCount, 3);
+
+  stop();
+  stop();
+  assert.equal(state.removed.length, 1);
+  state.binding.callback({});
+  assert.equal(invalidationCount, 3);
+});
