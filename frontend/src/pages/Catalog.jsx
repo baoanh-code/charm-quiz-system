@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import CatalogCard from '../components/CatalogCard';
-import { isCatalogPreview, watchCatalog } from '../services/catalogService';
+import { isRealtimeStale, watchCatalog } from '../services/catalogService';
 
 function Catalog() {
   const [charms, setCharms] = useState(null);
   const [error, setError] = useState('');
+  const [refreshError, setRefreshError] = useState('');
+  const [realtimeStatus, setRealtimeStatus] = useState('CONNECTING');
   const [announcement, setAnnouncement] = useState('');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
@@ -26,7 +28,16 @@ function Catalog() {
     previousCharms.current = nextCharms;
     setCharms(nextCharms);
     setError('');
-  }, () => setError('The catalog could not be updated. Please try again.')), [retryKey]);
+    setRefreshError('');
+  }, (_error, { hasData }) => {
+    if (hasData) {
+      setRefreshError('The latest stock information could not be loaded. Showing the last available catalog.');
+    } else {
+      setError('The catalog could not be loaded. Please try again.');
+    }
+  }, setRealtimeStatus), [retryKey]);
+
+  const realtimeStale = isRealtimeStale(realtimeStatus);
 
   const categories = useMemo(() =>
     [...new Set((charms ?? []).map((charm) => charm.category))].sort(),
@@ -49,8 +60,12 @@ function Catalog() {
           <h1>Charm Catalog</h1>
         </div>
         <p className="catalog-heading__meta">
-          <span className="catalog-heading__dot" aria-hidden="true" />
-          {isCatalogPreview ? 'Sample inventory' : 'Current inventory'}
+          <span className={`catalog-heading__dot${realtimeStale ? ' catalog-heading__dot--stale' : ''}`} aria-hidden="true" />
+          {realtimeStatus === 'SUBSCRIBED'
+            ? 'Live inventory'
+            : realtimeStale
+              ? 'Live updates reconnecting'
+              : 'Connecting live inventory'}
         </p>
       </header>
 
@@ -86,11 +101,26 @@ function Catalog() {
       </p>
       <p className="visually-hidden" role="status">{announcement}</p>
 
+      {realtimeStale ? (
+        <p className="catalog-live-status" role="status">
+          Live stock updates are reconnecting. The catalog may be temporarily stale.
+        </p>
+      ) : null}
+
       {error ? (
         <div className="catalog-message catalog-message--error" role="alert">
           <p>{error}</p>
           <button className="button button--secondary" type="button" onClick={() => setRetryKey((key) => key + 1)}>
             Try again
+          </button>
+        </div>
+      ) : null}
+
+      {refreshError ? (
+        <div className="catalog-message catalog-message--warning" role="alert">
+          <p>{refreshError}</p>
+          <button className="button button--secondary" type="button" onClick={() => setRetryKey((key) => key + 1)}>
+            Refresh catalog
           </button>
         </div>
       ) : null}

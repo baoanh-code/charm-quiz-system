@@ -13,18 +13,29 @@ npm run dev
 
 Open the local URL printed by Vite. On PowerShell where `npm` script execution is blocked, use `npm.cmd` instead.
 
-## Catalog data
+Create a local environment file from `.env.example` and configure:
 
-The catalog uses 62 sample charms by default. Sample stock changes automatically every 8 seconds while the catalog is open.
+```properties
+VITE_API_BASE_URL=http://localhost:8080/api
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<public-publishable-key>
+```
 
-Set `VITE_CATALOG_SOURCE=api` to read `GET /api/charms` and poll it every 8 seconds. `VITE_API_BASE_URL` defaults to `http://localhost:8080/api`. API rows should include `id`, `name`, `category`, `imageUrl` (or `image_url`), and `availabilityStatus` (or `availability_status`) with `IN_STOCK` or `OUT_OF_STOCK`. An optional `thumbnailUrl` is preferred for grid images. Unknown stock values display as "Check Availability".
+The publishable key is intentionally public and relies on Supabase RLS. Never add a service-role key, `SUPABASE_SECRET_KEY`, Gemini key, or any backend credential to a `VITE_*` variable.
 
-The current backend filters active charms but does not yet expose a stock field or push events. Polling is the frontend update path until that contract is available.
+## Backend integration
+
+- The catalog loads from `GET /api/charms`.
+- Recommendation profiles are sent to `POST /api/recommendations`.
+- Catalog stock updates subscribe directly to Supabase Realtime `UPDATE` events on `public.charm`.
+- Realtime events are invalidation signals only. The frontend always refetches `GET /api/charms` for display data.
+
+No catalog or recommendation mock data is used at runtime.
 
 ## Checks
 
 ```sh
-node --test src/services/*.test.js
+npm test
 npm run lint
 npm run build
 ```
