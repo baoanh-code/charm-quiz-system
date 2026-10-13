@@ -39,9 +39,10 @@ function normalizeRecommendation(item) {
     !(item.imageUrl == null || typeof item.imageUrl === 'string') ||
     !validSources.has(item.source) ||
     !Number.isInteger(item.rank) ||
+    item.rank < 1 ||
     typeof item.reason !== 'string'
   ) {
-    throw new Error('Unexpected recommendation item');
+    throw new Error('Unexpected recommendation item or rank');
   }
 
   return {
@@ -88,6 +89,18 @@ export function normalizeGroupedRecommendation(response, profile) {
     const recommendations = section.recommendations
       .map(normalizeRecommendation)
       .sort((left, right) => left.rank - right.rank);
+    const charmIds = new Set();
+
+    recommendations.forEach((recommendation, index) => {
+      if (charmIds.has(recommendation.charm.id)) {
+        throw new Error('Duplicate recommendation charm ID');
+      }
+      charmIds.add(recommendation.charm.id);
+
+      if (recommendation.rank !== index + 1) {
+        throw new Error('Unexpected recommendation rank sequence');
+      }
+    });
 
     return {
       key,

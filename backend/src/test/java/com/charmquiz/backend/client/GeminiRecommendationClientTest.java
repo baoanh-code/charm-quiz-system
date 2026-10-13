@@ -99,6 +99,82 @@ class GeminiRecommendationClientTest {
         server.verify();
     }
 
+    @Test
+    void rejectsMalformedStructuredJsonAsRecoverableAiError() throws Exception {
+        GeminiProperties properties = configuredProperties();
+        RestClient.Builder builder = RestClient.builder()
+                .baseUrl("https://generativelanguage.googleapis.com/v1beta/models");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        ObjectMapper objectMapper = new ObjectMapper();
+        GeminiRecommendationClient client = new GeminiRecommendationClient(
+                properties,
+                builder.build(),
+                objectMapper
+        );
+
+        server.expect(requestTo(containsString(":generateContent")))
+                .andRespond(withSuccess(
+                        providerResponse(objectMapper, "{not-json"),
+                        MediaType.APPLICATION_JSON
+                ));
+
+        assertThatThrownBy(() -> client.recommend(
+                Map.of(RecommendationSectionType.INTERESTS, List.of("music")),
+                List.of(charm("charm-1"))
+        )).isInstanceOf(AiRecommendationException.class);
+        server.verify();
+    }
+
+    @Test
+    void rejectsUnknownSectionAsRecoverableAiError() throws Exception {
+        GeminiProperties properties = configuredProperties();
+        RestClient.Builder builder = RestClient.builder()
+                .baseUrl("https://generativelanguage.googleapis.com/v1beta/models");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        ObjectMapper objectMapper = new ObjectMapper();
+        GeminiRecommendationClient client = new GeminiRecommendationClient(
+                properties,
+                builder.build(),
+                objectMapper
+        );
+        String structuredText = objectMapper.writeValueAsString(Map.of(
+                "sections", List.of(Map.of(
+                        "type", "UNKNOWN",
+                        "charmIds", List.of("charm-1")
+                ))
+        ));
+
+        server.expect(requestTo(containsString(":generateContent")))
+                .andRespond(withSuccess(
+                        providerResponse(objectMapper, structuredText),
+                        MediaType.APPLICATION_JSON
+                ));
+
+        assertThatThrownBy(() -> client.recommend(
+                Map.of(RecommendationSectionType.INTERESTS, List.of("music")),
+                List.of(charm("charm-1"))
+        )).isInstanceOf(AiRecommendationException.class)
+                .hasMessageContaining("unknown section");
+        server.verify();
+    }
+
+    private GeminiProperties configuredProperties() {
+        GeminiProperties properties = new GeminiProperties();
+        properties.setApiKey("test-key");
+        properties.setModel("gemini-2.5-flash-lite");
+        return properties;
+    }
+
+    private String providerResponse(ObjectMapper objectMapper, String structuredText) throws Exception {
+        return objectMapper.writeValueAsString(Map.of(
+                "candidates", List.of(Map.of(
+                        "content", Map.of(
+                                "parts", List.of(Map.of("text", structuredText))
+                        )
+                ))
+        ));
+    }
+
     private EligibleCharm charm(String id) {
         return new EligibleCharm(
                 id,

@@ -4,6 +4,8 @@ import com.charmquiz.backend.dto.CharmCatalogItemResponse;
 import com.charmquiz.backend.model.CharmStockStatus;
 import com.charmquiz.backend.model.EligibleCharm;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
@@ -92,6 +94,38 @@ class SupabaseCharmServiceTest {
         assertThatThrownBy(service::getCatalogCharms)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid stock_status from Supabase: AVAILABLE");
+        server.verify();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"name", "image_url"})
+    void rejectsMissingRequiredCatalogFieldsAsUpstreamDataError(String missingField) {
+        RestClient.Builder builder = RestClient.builder().baseUrl("https://project.supabase.co/rest/v1");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        SupabaseCharmService service = new SupabaseCharmService(builder.build(), new ObjectMapper());
+        String name = missingField.equals("name") ? "null" : "\"Charm\"";
+        String imageUrl = missingField.equals("image_url")
+                ? "null"
+                : "\"https://example.com/charm.png\"";
+
+        server.expect(requestTo(containsString("/charm?status=eq.ACTIVE")))
+                .andRespond(withSuccess(
+                        """
+                        [{
+                          "id": "charm-1",
+                          "name": %s,
+                          "description": null,
+                          "image_url": %s,
+                          "category": null,
+                          "stock_status": "IN_STOCK"
+                        }]
+                        """.formatted(name, imageUrl),
+                        MediaType.APPLICATION_JSON
+                ));
+
+        assertThatThrownBy(service::getCatalogCharms)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("catalog");
         server.verify();
     }
 

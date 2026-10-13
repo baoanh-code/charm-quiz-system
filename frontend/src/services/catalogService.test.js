@@ -54,6 +54,22 @@ test('rejects invalid or contradictory catalog stock data', () => {
   assert.throws(() => normalizeCatalog({ items: [] }), /Unexpected catalog response/);
 });
 
+test('rejects missing required catalog fields', () => {
+  const valid = {
+    id: 'charm-1',
+    name: 'Charm',
+    description: null,
+    imageUrl: '/charm.webp',
+    category: null,
+    stockStatus: 'IN_STOCK',
+    available: true,
+  };
+
+  assert.throws(() => normalizeCatalog([{ ...valid, id: null }]), /Unexpected catalog item/);
+  assert.throws(() => normalizeCatalog([{ ...valid, name: '   ' }]), /Unexpected catalog item/);
+  assert.throws(() => normalizeCatalog([{ ...valid, imageUrl: null }]), /Unexpected catalog item/);
+});
+
 test('refetches after subscribe and invalidation without overlapping requests', async () => {
   let subscription;
   let releaseFirst;
@@ -154,4 +170,69 @@ test('cleanup aborts the active fetch and cancels queued invalidation work', asy
   assert.equal(cancelledTimer, 42);
   assert.equal(aborted, true);
   assert.equal(stopped, true);
+});
+
+test('coalesces rapid invalidations without overlapping fetches and cleans up once', async () => {
+  let subscription;
+  let subscribeCount = 0;
+  let cleanupCount = 0;
+  let fetchCount = 0;
+  let activeFetches = 0;
+  let maxActiveFetches = 0;
+  const resolvers = [];
+  const scheduled = [];
+
+  const stop = watchCatalog(
+    () => {},
+    (error) => { throw error; },
+    () => {},
+    {
+      fetchCatalog() {
+        fetchCount += 1;
+        activeFetches += 1;
+        maxActiveFetches = Math.max(maxActiveFetches, activeFetches);
+        return new Promise((resolve) => {
+          resolvers.push(() => {
+            activeFetches -= 1;
+            resolve([]);
+          });
+        });
+      },
+      subscribe(callbacks) {
+        subscribeCount += 1;
+        subscription = callbacks;
+        return () => { cleanupCount += 1; };
+      },
+      schedule(callback) {
+        scheduled.push(callback);
+        return scheduled.length;
+      },
+      cancelScheduled() {},
+    },
+  );
+
+  subscription.onInvalidate();
+  subscription.onInvalidate();
+  subscription.onInvalidate();
+  assert.equal(scheduled.length, 1);
+  scheduled.shift()();
+  resolvers.shift()();
+  await flush();
+
+  subscription.onInvalidate();
+  subscription.onInvalidate();
+  assert.equal(scheduled.length, 1);
+  scheduled.shift()();
+  resolvers.shift()();
+  await flush();
+  resolvers.shift()();
+  await flush();
+
+  assert.equal(fetchCount, 3);
+  assert.equal(maxActiveFetches, 1);
+  assert.equal(subscribeCount, 1);
+
+  stop();
+  stop();
+  assert.equal(cleanupCount, 1);
 });

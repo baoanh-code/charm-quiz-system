@@ -115,6 +115,7 @@ export function watchCatalog(
   }
 
   return () => {
+    if (closed) return;
     closed = true;
     refreshPending = false;
     if (invalidationTimer != null) cancelScheduled(invalidationTimer);
