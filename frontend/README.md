@@ -1,16 +1,30 @@
-# React + Vite
+# Charm Quiz frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React and Vite customer interface for the charm recommendation, catalog, and history quiz.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+From the `frontend` directory:
 
-## React Compiler
+```sh
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Open the local URL printed by Vite. On PowerShell where `npm` script execution is blocked, use `npm.cmd` instead.
 
-## Expanding the ESLint configuration
+## Catalog data
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+The catalog uses 62 sample charms by default. Sample stock changes automatically every 8 seconds while the catalog is open.
+
+Set `VITE_CATALOG_SOURCE=api` to read `GET /api/charms` and poll it every 8 seconds. `VITE_API_BASE_URL` defaults to `http://localhost:8080/api`. API rows should include `id`, `name`, `category`, `imageUrl` (or `image_url`), and `availabilityStatus` (or `availability_status`) with `IN_STOCK` or `OUT_OF_STOCK`. An optional `thumbnailUrl` is preferred for grid images. Unknown stock values display as "Check Availability".
+
+The current backend filters active charms but does not yet expose a stock field or push events. Polling is the frontend update path until that contract is available.
+
+## Checks
+
+```sh
+node --test src/services/*.test.js
+npm run lint
+npm run build
+```
