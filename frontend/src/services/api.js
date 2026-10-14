@@ -10,7 +10,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request(endpoint, options = {}) {
+export async function request(endpoint, options = {}) {
   const headers = { ...options.headers };
   if (options.body != null && !Object.keys(headers).some((key) => key.toLowerCase() === 'content-type')) {
     headers['Content-Type'] = 'application/json';

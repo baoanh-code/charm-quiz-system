@@ -709,6 +709,1207 @@ p {
   padding: 4rem 1rem;
 }
 
+.quiz-page {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+.quiz-hero {
+  display: grid;
+  gap: 1rem;
+  padding: 0.75rem 0 1.5rem;
+}
+
+.quiz-hero > div {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.quiz-hero h1 {
+  max-width: 15ch;
+  font-size: clamp(2.25rem, 10vw, 4.3rem);
+}
+
+.quiz-hero p:not(.section-kicker) {
+  max-width: 42rem;
+  color: var(--muted);
+  font-size: 1.03rem;
+}
+
+.quiz-start {
+  display: grid;
+  justify-items: start;
+  gap: 1rem;
+  padding: 1.5rem 0;
+}
+
+.quiz-card {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 28px rgba(36, 28, 29, 0.06);
+}
+
+.quiz-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-strong);
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.quiz-progress__bar {
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f0e3d4;
+}
+
+.quiz-progress__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 220ms ease;
+}
+
+.quiz-card h2 {
+  max-width: 34rem;
+  padding: 0.5rem 0;
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: clamp(1.35rem, 6vw, 2rem);
+  line-height: 1.22;
+}
+
+.quiz-options {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.quiz-option {
+  display: grid;
+  grid-template-columns: 1.7rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  min-height: 3.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem;
+  color: var(--text-strong);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 750;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.quiz-option:hover:not(:disabled),
+.quiz-option:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(143, 23, 38, 0.1);
+  outline: none;
+}
+
+.quiz-option:disabled {
+  cursor: default;
+}
+
+.quiz-option__mark {
+  display: grid;
+  width: 1.45rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  color: var(--muted);
+}
+
+.quiz-option[aria-pressed='true'] .quiz-option__mark {
+  border-width: 0.45rem;
+  color: var(--primary);
+}
+
+.quiz-option--correct {
+  border-color: #27835b;
+  color: #124b34;
+  background: #e8f7ef;
+}
+
+.quiz-option--correct .quiz-option__mark {
+  color: #27835b;
+}
+
+.quiz-option--incorrect {
+  border-color: #be3038;
+  color: #7d1620;
+  background: #fbecee;
+}
+
+.quiz-option--incorrect .quiz-option__mark {
+  color: #be3038;
+}
+
+.quiz-feedback {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  border-left: 3px solid var(--primary);
+  padding: 0.85rem 0 0.2rem 1rem;
+}
+
+.quiz-feedback[data-correct='true'] {
+  border-color: #27835b;
+}
+
+.quiz-feedback p:first-child {
+  color: var(--text-strong);
+  font-weight: 850;
+}
+
+.quiz-feedback p:not(:first-child),
+.quiz-status {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.quiz-alert {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.quiz-result {
+  display: grid;
+  gap: 1.5rem;
+  padding-block: 0.75rem 2rem;
+}
+
+.quiz-result h1 {
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: clamp(2rem, 8vw, 3rem);
+  line-height: 1.2;
+}
+
+.quiz-result__status,
+.quiz-result__notice {
+  color: var(--muted);
+}
+
+.quiz-result__notice {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  border-left: 3px solid var(--primary);
+  padding-left: 1rem;
+}
+
+.quiz-result__summary {
+  display: grid;
+  gap: 1.5rem;
+  border-block: 1px solid var(--border);
+  padding-block: 1.5rem;
+}
+
+.quiz-result__label {
+  color: var(--muted);
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.quiz-result__score {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.quiz-result__score strong {
+  color: var(--primary);
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: clamp(3.5rem, 15vw, 5.5rem);
+  line-height: 1;
+}
+
+.quiz-result__score strong span {
+  color: var(--muted);
+  font-size: 0.4em;
+}
+
+.quiz-result__counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.quiz-result__counts div {
+  display: grid;
+  align-content: center;
+  gap: 0.2rem;
+}
+
+.quiz-result__counts dt {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.quiz-result__counts dd {
+  margin: 0;
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.quiz-result__reward {
+  border-left: 4px solid var(--primary);
+  padding: 0.8rem 1rem;
+  background: #fbecee;
+}
+
+.quiz-result__reward--eligible {
+  border-color: #27835b;
+  background: #e8f7ef;
+}
+
+.quiz-result__reward h2 {
+  margin: 0.2rem 0;
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+
+.quiz-result__details {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.quiz-result__details h2 {
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 1.25rem;
+}
+
+.quiz-result__details ol {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.quiz-result__details li {
+  border-top: 1px solid var(--border);
+  padding: 1rem 0 1rem 0.25rem;
+}
+
+.quiz-result__details li::marker {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.quiz-result__detail-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+}
+
+.quiz-result__detail-heading h3 {
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 1rem;
+}
+
+.quiz-result__detail-heading span {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.quiz-result__correct {
+  color: #124b34;
+}
+
+.quiz-result__incorrect {
+  color: #a31f2b;
+}
+
+.quiz-result__details li p {
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.quiz-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.manager-auth-page,
+.manager-shell {
+  min-height: 100svh;
+  background: #f4f6f5;
+}
+
+.manager-auth-page {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 2rem 1rem;
+}
+
+.manager-auth-panel {
+  display: grid;
+  width: min(100%, 28rem);
+  gap: 1.25rem;
+  border: 1px solid #dbe1df;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgba(36, 28, 29, 0.06);
+}
+
+.manager-eyebrow {
+  color: var(--primary);
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.manager-auth-panel h1,
+.manager-workspace h1 {
+  max-width: none;
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 1.8rem;
+  line-height: 1.2;
+}
+
+.manager-auth-panel > p:not(.manager-eyebrow) {
+  color: var(--muted);
+}
+
+.manager-login-form,
+.manager-field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.manager-login-form {
+  gap: 1rem;
+}
+
+.manager-field label {
+  color: var(--text-strong);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.manager-field input {
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid #c9d2ce;
+  border-radius: 5px;
+  padding: 0.65rem 0.8rem;
+  color: var(--text-strong);
+  background: var(--surface);
+  font: inherit;
+}
+
+.manager-field select {
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid #c9d2ce;
+  border-radius: 5px;
+  padding: 0.65rem 0.8rem;
+  color: var(--text-strong);
+  background: var(--surface);
+  font: inherit;
+}
+
+.manager-field input:focus-visible {
+  border-color: var(--primary);
+  outline: 3px solid rgba(143, 23, 38, 0.14);
+}
+
+.manager-field select:focus-visible {
+  border-color: var(--primary);
+  outline: 3px solid rgba(143, 23, 38, 0.14);
+}
+
+.manager-field input:disabled {
+  opacity: 0.65;
+}
+
+.manager-login-form .button {
+  width: 100%;
+  box-shadow: none;
+}
+
+.manager-form-error {
+  color: #a31f2b;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.manager-home-link {
+  width: fit-content;
+  color: var(--primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.manager-header {
+  border-bottom: 1px solid #dbe1df;
+  background: var(--surface);
+}
+
+.manager-header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  width: min(100%, 1120px);
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+}
+
+.manager-header__brand {
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.manager-header__brand span {
+  display: block;
+  color: var(--primary);
+  font-size: 0.76rem;
+}
+
+.manager-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.manager-header__nav a {
+  border-radius: 5px;
+  padding: 0.55rem 0.85rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.manager-header__nav a:hover,
+.manager-header__nav a:focus-visible,
+.manager-header__nav a.active {
+  color: var(--primary);
+  background: #f8ecee;
+}
+
+.manager-header .button {
+  min-height: 2.75rem;
+  box-shadow: none;
+}
+
+.manager-main {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.manager-workspace {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.manager-workspace__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.manager-workspace__heading > div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.manager-workspace__heading > div > p:last-child {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.manager-workspace__heading .button {
+  gap: 0.5rem;
+  box-shadow: none;
+}
+
+.manager-preview-note {
+  border-left: 3px solid #729b91;
+  padding: 0.45rem 0.75rem;
+  color: #3f5d55;
+  background: #eaf2ef;
+  font-size: 0.88rem;
+}
+
+.manager-save-notice {
+  color: #245b45;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.manager-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 0;
+  border-block: 1px solid #dbe1df;
+  padding-block: 1rem;
+}
+
+.manager-summary div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.manager-summary dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.manager-summary dd {
+  margin: 0;
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.manager-filters {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.manager-filter {
+  display: grid;
+  min-width: 0;
+  gap: 0.4rem;
+  color: var(--text-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.manager-filter input,
+.manager-filter select {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  border: 1px solid #cbd4d0;
+  border-radius: 5px;
+  padding: 0.55rem 0.7rem;
+  color: var(--text-strong);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.manager-filter input:focus-visible,
+.manager-filter select:focus-visible {
+  outline: 3px solid rgba(143, 23, 38, 0.14);
+  border-color: var(--primary);
+}
+
+.manager-filter__input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd4d0;
+  border-radius: 5px;
+  padding-left: 0.7rem;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.manager-filter__input-wrap:focus-within {
+  outline: 3px solid rgba(143, 23, 38, 0.14);
+  border-color: var(--primary);
+}
+
+.manager-filter__input-wrap input {
+  border: 0;
+  outline: 0;
+}
+
+.manager-filter__input-wrap input:focus-visible {
+  border: 0;
+  outline: 0;
+}
+
+.manager-list-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.manager-list-heading h2 {
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 1.15rem;
+}
+
+.manager-list-heading span {
+  color: var(--muted);
+  font-size: 0.83rem;
+  text-align: right;
+}
+
+.manager-list-message {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  border: 1px solid #dbe1df;
+  border-radius: var(--radius);
+  padding: 2rem;
+  background: var(--surface);
+}
+
+.manager-list-message h3 {
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 1.1rem;
+}
+
+.manager-table-scroll {
+  overflow-x: auto;
+  border: 1px solid #dbe1df;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.manager-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.manager-table th {
+  padding: 0.8rem 1rem;
+  color: #596b65;
+  background: #f8faf9;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.manager-table td {
+  border-top: 1px solid #e5eae7;
+  padding: 0.7rem 1rem;
+  font-size: 0.88rem;
+}
+
+.manager-table th:last-child,
+.manager-table td:last-child {
+  width: 4rem;
+  text-align: center;
+}
+
+.manager-rules-table {
+  min-width: 790px;
+}
+
+.manager-rules-table th:last-child,
+.manager-rules-table td:last-child {
+  width: 7rem;
+}
+
+.manager-rules-table__charm {
+  min-width: 10rem;
+  font-weight: 700;
+}
+
+.manager-priority {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.manager-rule-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.manager-rule-toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.manager-rule-toggle input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: #245b45;
+  cursor: pointer;
+}
+
+.manager-rule-toggle input:disabled {
+  cursor: wait;
+}
+
+.manager-table__charm {
+  display: flex;
+  min-width: 12rem;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 700;
+}
+
+.manager-charm-thumb {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 5px;
+  color: #46675e;
+  background: #eaf2ef;
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 1.1rem;
+}
+
+.manager-charm-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.manager-state {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.manager-state--active,
+.manager-state--in_stock {
+  color: #245b45;
+  background: #e6f3eb;
+}
+
+.manager-state--inactive {
+  color: #596b65;
+  background: #e9eeeb;
+}
+
+.manager-state--out_of_stock {
+  color: #9a3b28;
+  background: #f9ece6;
+}
+
+.manager-icon-button {
+  display: inline-grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid #d6dfdb;
+  border-radius: 5px;
+  color: var(--text-strong);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.manager-icon-button:hover,
+.manager-icon-button:focus-visible {
+  border-color: var(--primary);
+  color: var(--primary);
+  outline: 2px solid rgba(143, 23, 38, 0.12);
+}
+
+.manager-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.manager-pagination,
+.manager-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.manager-pagination {
+  justify-content: flex-end;
+  color: var(--muted);
+  font-size: 0.83rem;
+}
+
+.manager-editor {
+  width: min(720px, calc(100% - 2rem));
+  max-height: calc(100svh - 2rem);
+  overflow-y: auto;
+  border: 1px solid #dbe1df;
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  color: var(--text-strong);
+  background: var(--surface);
+  box-shadow: 0 24px 64px rgba(24, 40, 34, 0.2);
+}
+
+.manager-editor::backdrop {
+  background: rgba(24, 40, 34, 0.5);
+}
+
+.manager-editor__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.2rem;
+}
+
+.manager-editor__header h2 {
+  margin-top: 0.3rem;
+  font-family: 'Be Vietnam Pro', var(--sans);
+  font-size: 1.4rem;
+}
+
+.manager-editor__form {
+  display: grid;
+  gap: 1rem;
+}
+
+.manager-field--wide {
+  grid-column: 1 / -1;
+}
+
+.manager-field__label {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.manager-field textarea {
+  width: 100%;
+  border: 1px solid #c9d2ce;
+  border-radius: 5px;
+  padding: 0.65rem 0.8rem;
+  color: var(--text-strong);
+  background: var(--surface);
+  font: inherit;
+  resize: vertical;
+}
+
+.manager-field textarea:focus-visible {
+  border-color: var(--primary);
+  outline: 3px solid rgba(143, 23, 38, 0.14);
+}
+
+.manager-image-section {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.manager-image-section__body {
+  display: grid;
+  gap: 1rem;
+}
+
+.manager-image-preview {
+  display: grid;
+  width: 8rem;
+  aspect-ratio: 1;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid #dbe1df;
+  border-radius: 5px;
+  color: #729b91;
+  background: #eaf2ef;
+}
+
+.manager-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.manager-image-section__controls {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 0.65rem;
+}
+
+.manager-image-section__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.manager-file-button {
+  position: relative;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.manager-file-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.manager-file-button:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.manager-field__hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.manager-editor__switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  border-block: 1px solid #e5eae7;
+  padding-block: 1rem;
+}
+
+.manager-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.manager-switch input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--primary);
+}
+
+.manager-editor__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.manager-editor__footer .button {
+  box-shadow: none;
+}
+
+.manager-import,
+.manager-quiz-library {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid #dbe1df;
+  padding-top: 1.25rem;
+}
+
+.manager-import__controls,
+.manager-import__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.manager-import__filename {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-strong);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.manager-import__filename svg {
+  flex: 0 0 auto;
+}
+
+.manager-import__message {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.manager-import__result {
+  display: grid;
+  gap: 1rem;
+}
+
+.manager-import__invalid {
+  border-left: 3px solid #a31f2b;
+  padding: 0.75rem 1rem;
+  color: #8b2731;
+  background: #fbecee;
+  font-size: 0.88rem;
+}
+
+.manager-import__invalid ul {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.manager-import__preview {
+  display: grid;
+  max-height: 32rem;
+  gap: 0.6rem;
+  overflow-y: auto;
+  border-block: 1px solid #dbe1df;
+  padding-block: 1rem;
+}
+
+.manager-import__preview h3 {
+  font-size: 1rem;
+}
+
+.manager-import__actions {
+  justify-content: flex-end;
+}
+
+.manager-quiz-library__layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.manager-quiz-library__list {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+
+.manager-quiz-library__item {
+  display: grid;
+  width: 100%;
+  gap: 0.25rem;
+  border: 1px solid #dbe1df;
+  border-radius: 5px;
+  padding: 0.75rem;
+  color: var(--text-strong);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.manager-quiz-library__item small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.manager-quiz-library__item:hover,
+.manager-quiz-library__item:focus-visible,
+.manager-quiz-library__item--selected {
+  border-color: #729b91;
+  background: #eaf2ef;
+}
+
+.manager-quiz-library__detail {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 0.5rem;
+}
+
+.manager-question-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.manager-question {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+  border-bottom: 1px solid #dbe1df;
+  padding: 1rem 0;
+}
+
+.manager-question--invalid {
+  border-left: 3px solid #a31f2b;
+  padding-left: 0.8rem;
+}
+
+.manager-question__heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.manager-question__heading strong,
+.manager-question__issues {
+  color: #a31f2b;
+}
+
+.manager-question h3 {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.manager-question__options {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.5rem;
+  font-size: 0.86rem;
+}
+
+.manager-question__options li {
+  padding-left: 0.2rem;
+  overflow-wrap: anywhere;
+}
+
+.manager-question__correct {
+  color: #245b45;
+  font-weight: 700;
+}
+
+.manager-question__answer {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.manager-question__issues {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.82rem;
+}
+
 .recommendation-page {
   width: min(1120px, 100%);
   margin: 0 auto;
@@ -1378,9 +2579,26 @@ p {
   .feature-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .manager-filters,
+  .manager-editor__form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .manager-image-section__body {
+    grid-template-columns: 8rem minmax(0, 1fr);
+  }
 }
 
 @media (min-width: 760px) {
+  .manager-quiz-library__layout {
+    grid-template-columns: 15rem minmax(0, 1fr);
+  }
+
+  .manager-question__options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .catalog-page {
     padding-inline: 1.5rem;
   }
@@ -1428,6 +2646,23 @@ p {
 
   .recommendation-page {
     padding-inline: 1.5rem;
+  }
+
+  .quiz-page {
+    padding-inline: 1.5rem;
+  }
+
+  .quiz-card {
+    padding: 1.35rem;
+  }
+
+  .quiz-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quiz-result__summary {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
   }
 
   .hero-section {
@@ -1484,6 +2719,14 @@ p {
 }
 
 @media (min-width: 980px) {
+  .manager-filters {
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  }
+
+  .manager-filters--rules {
+    grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 1fr));
+  }
+
   .hero-section {
     grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.82fr);
     align-items: center;
@@ -1529,6 +2772,7 @@ p {
 
   .home-page,
   .recommendation-page,
+  .quiz-page,
   .results-page {
     padding-inline: 0;
   }
