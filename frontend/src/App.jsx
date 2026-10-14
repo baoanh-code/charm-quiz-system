@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import Catalog from './pages/Catalog';
-import FeaturePlaceholder from './pages/FeaturePlaceholder';
+import HistoryQuiz from './pages/HistoryQuiz';
 import Home from './pages/Home';
 import Recommendation from './pages/Recommendation';
 import RecommendationResults from './pages/RecommendationResults';
@@ -16,15 +16,7 @@ function App() {
           <Route path="/recommendation" element={<Recommendation />} />
           <Route path="/recommendation/results" element={<RecommendationResults />} />
           <Route path="/catalog" element={<Catalog />} />
-          <Route
-            path="/history-quiz"
-            element={
-              <FeaturePlaceholder
-                title="Vietnam History Quiz"
-                description="A lightweight quiz experience will let customers play and learn about Vietnam history."
-              />
-            }
-          />
+          <Route path="/history-quiz" element={<HistoryQuiz />} />
         </Route>
       </Routes>
     </BrowserRouter>
