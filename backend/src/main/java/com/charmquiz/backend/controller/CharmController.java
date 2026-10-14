@@ -1,6 +1,8 @@
 package com.charmquiz.backend.controller;
 
+import com.charmquiz.backend.dto.CharmCatalogItemResponse;
 import com.charmquiz.backend.service.SupabaseCharmService;
+import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,7 +18,7 @@ public class CharmController {
     }
 
     @GetMapping
-    public String getCharms() {
-        return charmService.getActiveCharms();
+    public List<CharmCatalogItemResponse> getCharms() {
+        return charmService.getCatalogCharms();
     }
 }
