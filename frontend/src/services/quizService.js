@@ -4,6 +4,7 @@ const QUIZ_LENGTH = 10;
 const MOCK_DELAY = 450;
 const START_ENDPOINT = '/quiz/start';
 const ANSWER_ENDPOINT = '/quiz/answer';
+const RESULT_ENDPOINT = '/quiz/result';
 
 const sampleQuestions = [
   {
@@ -78,6 +79,19 @@ const mockAnswers = new Map(
   ]),
 );
 
+export function makePreviewQuizBank() {
+  return {
+    id: 'preview-vietnam-history',
+    title: 'Vietnam History',
+    questions: sampleQuestions.map((question) => ({
+      id: question.id,
+      prompt: question.prompt,
+      options: [...question.options],
+      correctIndex: question.correctIndex,
+    })),
+  };
+}
+
 export const isQuizPreview = import.meta.env?.VITE_QUIZ_SOURCE !== 'api';
 
 function getArray(value, keys) {
@@ -145,7 +159,60 @@ export function normalizeAnswerResult(response) {
     isCorrect,
     correctOptionId: correctOptionId == null ? null : String(correctOptionId),
     explanation: response?.explanation ?? response?.message ?? '',
+    finalResult: response?.result ?? response?.quizResult ?? null,
   };
+}
+
+export function normalizeQuizResult(response, answers, { allowRetry = false } = {}) {
+  if (!Array.isArray(answers) || answers.length !== QUIZ_LENGTH) {
+    throw new Error('Unexpected quiz result response');
+  }
+
+  const correctFromAnswers = answers.filter((answer) => answer.isCorrect).length;
+  const correctCount = response?.correctCount ?? response?.correctAnswers ??
+    response?.correct_count ?? response?.score ?? correctFromAnswers;
+  const incorrectCount = response?.incorrectCount ?? response?.incorrectAnswers ??
+    response?.incorrect_count ?? QUIZ_LENGTH - correctCount;
+  const score = response?.score ?? correctCount;
+
+  if (![score, correctCount, incorrectCount].every((value) =>
+    Number.isInteger(value) && value >= 0 && value <= QUIZ_LENGTH) ||
+    correctCount + incorrectCount !== QUIZ_LENGTH || score !== correctCount) {
+    throw new Error('Unexpected quiz result response');
+  }
+
+  const details = response?.details ?? response?.results ?? answers;
+  if (!Array.isArray(details)) {
+    throw new Error('Unexpected quiz result details');
+  }
+
+  const retryAllowed = response?.canRetry ?? response?.retryAllowed ?? allowRetry;
+
+  return {
+    score,
+    correctCount,
+    incorrectCount,
+    totalQuestions: QUIZ_LENGTH,
+    rewardEligible: score >= 6,
+    canRetry: retryAllowed === true,
+    details: details.map((detail, index) => ({
+      id: String(detail?.questionId ?? detail?.id ?? index + 1),
+      question: String(detail?.question ?? detail?.questionText ?? detail?.prompt ?? ''),
+      selectedAnswer: String(detail?.selectedAnswer ?? detail?.selectedOption ?? ''),
+      correctAnswer: String(detail?.correctAnswer ?? detail?.correctOption ?? ''),
+      isCorrect: detail?.isCorrect ?? detail?.is_correct ?? detail?.correct ?? false,
+      explanation: String(detail?.explanation ?? ''),
+    })),
+  };
+}
+
+export async function loadQuizResult({ sessionId, answers, finalResult }) {
+  if (finalResult || isQuizPreview) {
+    return normalizeQuizResult(finalResult, answers, { allowRetry: isQuizPreview });
+  }
+
+  const response = await request(`${RESULT_ENDPOINT}?sessionId=${encodeURIComponent(sessionId)}`);
+  return normalizeQuizResult(response, answers);
 }
 
 function buildMockSession() {

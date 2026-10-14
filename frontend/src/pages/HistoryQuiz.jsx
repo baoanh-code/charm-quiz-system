@@ -1,11 +1,22 @@
 import { useMemo, useRef, useState } from 'react';
-import { startQuizSession, submitQuizAnswer } from '../services/quizService';
+import QuizResult from '../components/QuizResult';
+import {
+  isQuizPreview,
+  loadQuizResult,
+  normalizeQuizResult,
+  startQuizSession,
+  submitQuizAnswer,
+} from '../services/quizService';
 
 const initialState = {
   sessionId: '',
   questions: [],
   currentIndex: 0,
   score: 0,
+  answers: [],
+  finalResult: null,
+  result: null,
+  resultStatus: 'idle',
   selectedOptionId: '',
   answerResult: null,
   status: 'idle',
@@ -29,6 +40,7 @@ function getOptionClass(option, selectedOptionId, answerResult) {
 
 function HistoryQuiz() {
   const submittingRef = useRef(false);
+  const loadingResultRef = useRef(false);
   const [quiz, setQuiz] = useState(initialState);
 
   const question = quiz.questions[quiz.currentIndex];
@@ -82,6 +94,16 @@ function HistoryQuiz() {
         ...current,
         answerResult: result,
         score: current.score + (result.isCorrect ? 1 : 0),
+        answers: [...current.answers, {
+          questionId: question.id,
+          question: question.prompt,
+          selectedAnswer: question.options.find((option) => option.id === optionId)?.label ?? '',
+          correctAnswer: question.options.find((option) =>
+            option.id === result.correctOptionId)?.label ?? '',
+          isCorrect: result.isCorrect,
+          explanation: result.explanation,
+        }],
+        finalResult: result.finalResult,
         status: 'ready',
       }));
     } catch {
@@ -96,19 +118,34 @@ function HistoryQuiz() {
     }
   }
 
+  async function handleSeeResult() {
+    if (loadingResultRef.current) return;
+
+    loadingResultRef.current = true;
+    setQuiz((current) => ({ ...current, completed: true, resultStatus: 'loading' }));
+
+    try {
+      const result = await loadQuizResult({
+        sessionId: quiz.sessionId,
+        answers: quiz.answers,
+        finalResult: quiz.finalResult,
+      });
+      setQuiz((current) => ({ ...current, result, resultStatus: 'ready' }));
+    } catch {
+      const result = normalizeQuizResult(null, quiz.answers, { allowRetry: isQuizPreview });
+      setQuiz((current) => ({ ...current, result, resultStatus: 'error' }));
+    } finally {
+      loadingResultRef.current = false;
+    }
+  }
+
   function handleNext() {
+    if (quiz.currentIndex >= quiz.questions.length - 1) {
+      handleSeeResult();
+      return;
+    }
+
     setQuiz((current) => {
-      const isLastQuestion = current.currentIndex >= current.questions.length - 1;
-
-      if (isLastQuestion) {
-        return {
-          ...current,
-          selectedOptionId: '',
-          answerResult: null,
-          completed: true,
-        };
-      }
-
       return {
         ...current,
         currentIndex: current.currentIndex + 1,
@@ -122,16 +159,12 @@ function HistoryQuiz() {
   if (quiz.completed) {
     return (
       <div className="quiz-page">
-        <section className="quiz-finish" aria-labelledby="quiz-complete-title">
-          <p className="section-kicker">Vietnam History Quiz</p>
-          <h1 id="quiz-complete-title">You finished the journey.</h1>
-          <p>
-            Score: <strong>{quiz.score} / {totalQuestions}</strong>
-          </p>
-          <button className="button button--primary" type="button" onClick={handleStart}>
-            Play again
-          </button>
-        </section>
+        <QuizResult
+          result={quiz.result}
+          status={quiz.resultStatus}
+          onReload={handleSeeResult}
+          onRetry={handleStart}
+        />
       </div>
     );
   }
