@@ -1,15 +1,26 @@
-import { makeMockCatalog } from './catalogService.js';
+const previewGroups = [
+  ['Letters', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')],
+  ['Zodiac', ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']],
+  ['Animals', ['Cat', 'Dog', 'Rabbit', 'Butterfly', 'Dragon', 'Fox', 'Bird', 'Dolphin']],
+  ['Colors', ['Red Heart', 'Blue Star', 'Pink Flower', 'Green Leaf', 'Gold Sun', 'Purple Moon', 'White Pearl', 'Black Onyx']],
+  ['Interests', ['Music', 'Football', 'Car', 'Book', 'Travel', 'Art', 'Coffee', 'Camera']],
+];
 
 export function makePreviewManagerCharms() {
-  return makeMockCatalog().map((charm, index) => ({
-    id: charm.id,
-    name: charm.name,
-    description: `${charm.name} from the ${charm.category.toLowerCase()} collection.`,
-    category: charm.category,
-    tags: [charm.category.toLowerCase()],
-    imageUrl: charm.imageUrl ?? '',
-    status: index % 9 === 0 ? 'INACTIVE' : 'ACTIVE',
-    stockStatus: charm.availabilityStatus,
+  let index = 0;
+  return previewGroups.flatMap(([category, names]) => names.map((name) => {
+    index += 1;
+    const charmName = category === 'Letters' ? `Letter ${name} Charm` : `${name} Charm`;
+    return {
+      id: `sample-${index}`,
+      name: charmName,
+      description: `${charmName} from the ${category.toLowerCase()} collection.`,
+      category,
+      tags: [category.toLowerCase()],
+      imageUrl: '',
+      status: (index - 1) % 9 === 0 ? 'INACTIVE' : 'ACTIVE',
+      stockStatus: index % 7 === 0 ? 'OUT_OF_STOCK' : 'IN_STOCK',
+    };
   }));
 }
 
