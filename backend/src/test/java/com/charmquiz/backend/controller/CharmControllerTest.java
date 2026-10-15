@@ -5,6 +5,8 @@ import com.charmquiz.backend.model.CharmStockStatus;
 import com.charmquiz.backend.service.SupabaseCharmService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -16,7 +18,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CharmController.class)
+@WebMvcTest(
+        controllers = CharmController.class,
+        excludeAutoConfiguration = OAuth2ResourceServerAutoConfiguration.class
+)
+@AutoConfigureMockMvc(addFilters = false)
 class CharmControllerTest {
 
     @Autowired
