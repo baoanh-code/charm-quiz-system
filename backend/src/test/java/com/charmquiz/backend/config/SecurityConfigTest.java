@@ -10,6 +10,7 @@ import com.charmquiz.backend.service.SupabaseCharmService;
 import com.charmquiz.backend.service.SupabaseManagerAuthorizationService;
 import com.charmquiz.backend.service.SupabaseManagerCharmService;
 import com.charmquiz.backend.service.SupabaseManagerRecommendationRuleService;
+import com.charmquiz.backend.service.SupabaseManagerQuizService;
 import com.charmquiz.backend.service.SupabaseQuizAnswerService;
 import com.charmquiz.backend.service.SupabaseQuizService;
 import com.nimbusds.jose.JOSEException;
@@ -146,6 +147,9 @@ class SecurityConfigTest {
     private SupabaseManagerRecommendationRuleService managerRecommendationRuleService;
 
     @MockitoBean
+    private SupabaseManagerQuizService managerQuizService;
+
+    @MockitoBean
     private SupabaseQuizService quizService;
 
     @MockitoBean
@@ -217,6 +221,44 @@ class SecurityConfigTest {
                 .andExpect(status().isUnauthorized());
         mockMvc.perform(patch("/api/manager/recommendation-rules/{id}/status", id))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void everyManagerQuizEndpointRequiresAuthentication() throws Exception {
+        String id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+
+        mockMvc.perform(get("/api/manager/quizzes"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/manager/quizzes/{id}", id))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/manager/quizzes/validate"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/manager/quizzes/import"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(patch("/api/manager/quizzes/{id}/status", id))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void nonManagerCannotReachManagerQuizController() throws Exception {
+        when(managerAuthorizationService.isManager(USER_ID)).thenReturn(false);
+
+        mockMvc.perform(get("/api/manager/quizzes")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(validToken())))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void validManagerReachesManagerQuizController() throws Exception {
+        when(managerAuthorizationService.isManager(USER_ID)).thenReturn(true);
+        when(managerQuizService.getAllQuizzes()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/manager/quizzes")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(validToken())))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+
+        verify(managerQuizService).getAllQuizzes();
     }
 
     @Test
