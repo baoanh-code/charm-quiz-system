@@ -1,12 +1,14 @@
 package com.charmquiz.backend.config;
 
 import com.charmquiz.backend.dto.RecommendationResponse;
+import com.charmquiz.backend.dto.QuizSessionResponse;
 import com.charmquiz.backend.service.RecommendationService;
 import com.charmquiz.backend.service.SupabaseCharmStorageService;
 import com.charmquiz.backend.service.SupabaseCharmService;
 import com.charmquiz.backend.service.SupabaseManagerAuthorizationService;
 import com.charmquiz.backend.service.SupabaseManagerCharmService;
 import com.charmquiz.backend.service.SupabaseManagerRecommendationRuleService;
+import com.charmquiz.backend.service.SupabaseQuizService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -140,11 +142,19 @@ class SecurityConfigTest {
     @MockitoBean
     private SupabaseManagerRecommendationRuleService managerRecommendationRuleService;
 
+    @MockitoBean
+    private SupabaseQuizService quizService;
+
     @BeforeEach
     void configurePublicResponses() {
         when(charmService.getCatalogCharms()).thenReturn(List.of());
         when(recommendationService.getRecommendations(any()))
                 .thenReturn(new RecommendationResponse(List.of()));
+        when(quizService.startSession())
+                .thenReturn(new QuizSessionResponse(
+                        "99999999-9999-9999-9999-999999999999",
+                        List.of()
+                ));
     }
 
     @Test
@@ -359,6 +369,18 @@ class SecurityConfigTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validRecommendationRequest()))
                 .andExpect(status().isOk());
+        mockMvc.perform(post("/api/quiz/start")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer not-a-jwt"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void quizStartIsPublicWithoutTokenAndManagerEndpointsRemainProtected() throws Exception {
+        mockMvc.perform(post("/api/quiz/start"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/manager/charms"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
