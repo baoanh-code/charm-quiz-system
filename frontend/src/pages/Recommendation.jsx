@@ -13,31 +13,31 @@ const initialProfile = {
   favoriteColor: '',
 };
 
-const animalOptions = ['Cat', 'Dog', 'Rabbit', 'Dragon', 'Butterfly'];
-const colorOptions = ['Red', 'Blue', 'Pink', 'Green', 'Gold', 'Purple'];
+const animalOptions = ['Mèo', 'Chó', 'Thỏ', 'Rồng', 'Bướm'];
+const colorOptions = ['Đỏ', 'Xanh dương', 'Hồng', 'Xanh lá', 'Vàng', 'Tím'];
 
 function validateProfile(profile) {
   const errors = {};
   const payload = buildRecommendationPayload(profile);
 
   if (!payload.fullName) {
-    errors.fullName = 'Please enter your full name.';
+    errors.fullName = 'Vui lòng nhập họ và tên.';
   }
 
   if (!payload.birthDate) {
-    errors.birthDate = 'Please select your full date of birth.';
+    errors.birthDate = 'Vui lòng chọn đầy đủ ngày sinh.';
   }
 
   if (payload.interests.length === 0) {
-    errors.interests = 'Please add at least one interest.';
+    errors.interests = 'Vui lòng nhập ít nhất một sở thích.';
   }
 
   if (!payload.favoriteAnimal) {
-    errors.favoriteAnimal = 'Please enter or choose a favorite animal.';
+    errors.favoriteAnimal = 'Vui lòng nhập hoặc chọn động vật yêu thích.';
   }
 
   if (!payload.favoriteColor) {
-    errors.favoriteColor = 'Please enter or choose a favorite color.';
+    errors.favoriteColor = 'Vui lòng nhập hoặc chọn màu sắc yêu thích.';
   }
 
   return errors;
@@ -85,7 +85,7 @@ function Recommendation() {
       const result = await submitRecommendationProfile(profile);
       navigate('/recommendation/results', { state: { result } });
     } catch {
-      setRequestError('We could not load your picks. Please try again.');
+      setRequestError('Không thể tải gợi ý charm. Vui lòng thử lại.');
     } finally {
       submittingRef.current = false;
       setIsSubmitting(false);
@@ -96,18 +96,18 @@ function Recommendation() {
     <div className="recommendation-page">
       <section className="recommendation-hero" aria-labelledby="recommendation-title">
         <div>
-          <p className="section-kicker">Charm Recommendation</p>
-          <h1 id="recommendation-title">Tell us what should guide your charm.</h1>
+          <p className="section-kicker">Gợi ý charm</p>
+          <h1 id="recommendation-title">Hãy chia sẻ điều tạo nên chiếc charm dành cho bạn.</h1>
           <p>
-            Share a few details to explore charm picks inspired by you.
+            Chia sẻ một vài thông tin để khám phá những mẫu charm lấy cảm hứng từ chính bạn.
           </p>
         </div>
       </section>
 
-      <section className="form-shell" aria-label="Recommendation profile form">
+      <section className="form-shell" aria-label="Biểu mẫu thông tin nhận gợi ý charm">
         <form className="profile-form" noValidate onSubmit={handleSubmit} aria-busy={isSubmitting}>
           <div className="form-field">
-            <label htmlFor="fullName">Full Name</label>
+            <label htmlFor="fullName">Họ và tên</label>
             <input
               id="fullName"
               name="fullName"
@@ -129,7 +129,7 @@ function Recommendation() {
           </div>
 
           <div className="form-field">
-            <label htmlFor="birthDate">Birth Date</label>
+            <label htmlFor="birthDate">Ngày sinh</label>
             <input
               id="birthDate"
               name="birthDate"
@@ -149,13 +149,13 @@ function Recommendation() {
           </div>
 
           <div className="form-field form-field--wide">
-            <label htmlFor="interests">Interests</label>
+            <label htmlFor="interests">Sở thích</label>
             <textarea
               id="interests"
               name="interests"
               value={profile.interests}
               onChange={updateField}
-              placeholder="Music, Football, Cars"
+              placeholder="Âm nhạc, bóng đá, ô tô"
               rows="4"
               aria-describedby={
                 errors.interests ? 'interests-help interests-error' : 'interests-help'
@@ -165,7 +165,7 @@ function Recommendation() {
               required
             />
             <p className="field-help" id="interests-help">
-              Separate multiple interests with commas.
+              Phân tách nhiều sở thích bằng dấu phẩy.
             </p>
             {errors.interests ? (
               <p className="field-error" id="interests-error">
@@ -175,14 +175,14 @@ function Recommendation() {
           </div>
 
           <div className="form-field">
-            <label htmlFor="favoriteAnimal">Favorite Animal</label>
+            <label htmlFor="favoriteAnimal">Động vật yêu thích</label>
             <input
               id="favoriteAnimal"
               name="favoriteAnimal"
               type="text"
               value={profile.favoriteAnimal}
               onChange={updateField}
-              placeholder="Cat"
+              placeholder="Mèo"
               list="animal-options"
               autoComplete="off"
               aria-describedby={
@@ -205,14 +205,14 @@ function Recommendation() {
           </div>
 
           <div className="form-field">
-            <label htmlFor="favoriteColor">Favorite Color</label>
+            <label htmlFor="favoriteColor">Màu sắc yêu thích</label>
             <input
               id="favoriteColor"
               name="favoriteColor"
               type="text"
               value={profile.favoriteColor}
               onChange={updateField}
-              placeholder="Pink"
+              placeholder="Hồng"
               list="color-options"
               autoComplete="off"
               aria-describedby={
@@ -236,9 +236,9 @@ function Recommendation() {
 
           <div className="form-actions">
             {requestError ? <p className="field-error" role="alert">{requestError}</p> : null}
-            {isSubmitting ? <p className="field-help" role="status">Finding your charm picks...</p> : null}
+            {isSubmitting ? <p className="field-help" role="status">Đang tìm charm phù hợp với bạn...</p> : null}
             <button className="button button--primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Finding your picks...' : 'See my charm picks'}
+              {isSubmitting ? 'Đang tìm gợi ý...' : 'Xem gợi ý charm'}
             </button>
           </div>
         </form>

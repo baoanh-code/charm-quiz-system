@@ -17,7 +17,7 @@ function MainLayout() {
     <div className="app-layout">
       <header className="app-header" onKeyDown={handleHeaderKeyDown}>
         <div className="app-header__inner">
-          <NavLink className="app-brand" to="/" aria-label="Your Charm Your Story home" onClick={() => setMenuOpen(false)}>
+          <NavLink className="app-brand" to="/" aria-label="Về trang chủ Your Charm Your Story" onClick={() => setMenuOpen(false)}>
             <span className="brand-mark"><img src="/dong-son-drum.png" alt="" width="40" height="40" /></span>
             <span>Your Charm Your Story</span>
           </NavLink>
@@ -26,10 +26,10 @@ function MainLayout() {
             ref={toggleRef}
             className={`nav-toggle${menuOpen ? ' is-open' : ''}`}
             type="button"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-label={menuOpen ? 'Đóng trình đơn' : 'Mở trình đơn'}
             aria-controls="primary-navigation"
             aria-expanded={menuOpen}
-            title={menuOpen ? 'Close menu' : 'Open menu'}
+            title={menuOpen ? 'Đóng trình đơn' : 'Mở trình đơn'}
             onClick={() => setMenuOpen((open) => !open)}
           >
             <span className="nav-toggle__bars" aria-hidden="true"><span /><span /><span /></span>
@@ -38,11 +38,11 @@ function MainLayout() {
           <nav
             id="primary-navigation"
             className={`app-nav${menuOpen ? ' is-open' : ''}`}
-            aria-label="Primary navigation"
+            aria-label="Điều hướng chính"
           >
-            <NavLink to="/recommendation" onClick={() => setMenuOpen(false)}>Recommend</NavLink>
-            <NavLink to="/catalog" onClick={() => setMenuOpen(false)}>Catalog</NavLink>
-            <NavLink to="/history-quiz" onClick={() => setMenuOpen(false)}>Quiz</NavLink>
+            <NavLink to="/recommendation" onClick={() => setMenuOpen(false)}>Gợi ý charm</NavLink>
+            <NavLink to="/catalog" onClick={() => setMenuOpen(false)}>Danh mục</NavLink>
+            <NavLink to="/history-quiz" onClick={() => setMenuOpen(false)}>Đố vui</NavLink>
           </nav>
         </div>
       </header>

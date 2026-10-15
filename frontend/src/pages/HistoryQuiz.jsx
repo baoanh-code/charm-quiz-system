@@ -67,7 +67,7 @@ function HistoryQuiz() {
       setQuiz({
         ...initialState,
         status: 'error',
-        error: 'We could not start the quiz. Please try again.',
+        error: 'Không thể bắt đầu bài đố vui. Vui lòng thử lại.',
       });
     }
   }
@@ -111,7 +111,7 @@ function HistoryQuiz() {
         ...current,
         selectedOptionId: '',
         status: 'ready',
-        error: 'We could not submit that answer. Please try again.',
+        error: 'Không thể gửi câu trả lời. Vui lòng thử lại.',
       }));
     } finally {
       submittingRef.current = false;
@@ -173,19 +173,19 @@ function HistoryQuiz() {
     <div className="quiz-page">
       <section className="quiz-hero" aria-labelledby="quiz-title">
         <div>
-          <p className="section-kicker">Vietnam History Quiz</p>
-          <h1 id="quiz-title">Answer 10 quick questions from Vietnam's story.</h1>
+          <p className="section-kicker">Đố vui Lịch sử Việt Nam</p>
+          <h1 id="quiz-title">Trả lời nhanh 10 câu hỏi về lịch sử Việt Nam.</h1>
           <p>
-            Pick one answer at a time. The backend checks each choice before feedback appears.
+            Chọn một đáp án cho mỗi câu. Hệ thống sẽ kiểm tra lựa chọn trước khi hiển thị phản hồi.
           </p>
         </div>
       </section>
 
       {quiz.status === 'idle' || quiz.status === 'loading' || quiz.status === 'error' ? (
-        <section className="quiz-start" aria-label="Start quiz">
+        <section className="quiz-start" aria-label="Bắt đầu bài đố vui">
           {quiz.error ? <p className="quiz-alert" role="alert">{quiz.error}</p> : null}
           <button className="button button--primary" type="button" onClick={handleStart} disabled={isLoading}>
-            {isLoading ? 'Starting quiz...' : 'Start quiz'}
+            {isLoading ? 'Đang bắt đầu...' : 'Bắt đầu'}
           </button>
         </section>
       ) : null}
@@ -193,8 +193,8 @@ function HistoryQuiz() {
       {question ? (
         <section className="quiz-card" aria-labelledby="current-question" aria-busy={isSubmitting}>
           <div className="quiz-progress">
-            <span>Question {quiz.currentIndex + 1} / {totalQuestions}</span>
-            <span>{quiz.score} correct</span>
+            <span>Câu {quiz.currentIndex + 1} / {totalQuestions}</span>
+            <span>{quiz.score} câu đúng</span>
           </div>
           <div className="quiz-progress__bar" aria-hidden="true">
             <span style={{ width: `${progressPercent}%` }} />
@@ -202,7 +202,7 @@ function HistoryQuiz() {
 
           <h2 id="current-question">{question.prompt}</h2>
 
-          <div className="quiz-options" role="group" aria-label="Answer options">
+          <div className="quiz-options" role="group" aria-label="Các lựa chọn trả lời">
             {question.options.map((option) => {
               const optionClass = getOptionClass(option, quiz.selectedOptionId, quiz.answerResult);
               const isSelected = option.id === quiz.selectedOptionId;
@@ -223,19 +223,19 @@ function HistoryQuiz() {
             })}
           </div>
 
-          {isSubmitting ? <p className="quiz-status" role="status">Checking answer...</p> : null}
+          {isSubmitting ? <p className="quiz-status" role="status">Đang kiểm tra câu trả lời...</p> : null}
           {quiz.error ? <p className="quiz-alert" role="alert">{quiz.error}</p> : null}
 
           {quiz.answerResult ? (
             <div className="quiz-feedback" data-correct={quiz.answerResult.isCorrect}>
               <p>
                 {quiz.answerResult.isCorrect
-                  ? 'Correct answer.'
-                  : 'Incorrect answer. The correct answer is highlighted.'}
+                  ? 'Đáp án đúng.'
+                  : 'Đáp án chưa đúng. Đáp án đúng đã được đánh dấu.'}
               </p>
               {quiz.answerResult.explanation ? <p>{quiz.answerResult.explanation}</p> : null}
               <button className="button button--primary" type="button" onClick={handleNext}>
-                {quiz.currentIndex === totalQuestions - 1 ? 'See score' : 'Next question'}
+                {quiz.currentIndex === totalQuestions - 1 ? 'Xem kết quả' : 'Tiếp theo'}
               </button>
             </div>
           ) : null}

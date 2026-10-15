@@ -1,4 +1,6 @@
 
+import { getSupabaseClient } from './supabaseClient.js';
+
 const API_BASE_URL =
   import.meta.env?.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -29,6 +31,28 @@ export async function request(endpoint, options = {}) {
 
   const contentType = response.headers.get('content-type') || '';
   return contentType.includes('application/json') ? response.json() : response.text();
+}
+
+export async function managerRequest(endpoint, options = {}) {
+  const { accessToken: suppliedAccessToken, ...requestOptions } = options;
+  let accessToken = suppliedAccessToken;
+
+  if (!accessToken) {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new ApiError(401, 'Manager session unavailable');
+
+    const { data, error } = await supabase.auth.getSession();
+    accessToken = data?.session?.access_token;
+    if (error || !accessToken) throw new ApiError(401, 'Manager session unavailable');
+  }
+
+  return request(endpoint, {
+    ...requestOptions,
+    headers: {
+      ...requestOptions.headers,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
 }
 
 export function getHealth() {

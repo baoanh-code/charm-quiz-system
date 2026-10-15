@@ -3,6 +3,27 @@ import { subscribeToCatalogUpdates } from './catalogRealtime.js';
 
 const REALTIME_ERROR_STATUSES = new Set(['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED']);
 const INVALIDATION_DELAY_MS = 120;
+const categoryLabels = new Map([
+  ['animal', 'Động vật'],
+  ['animals', 'Động vật'],
+  ['birth date', 'Ngày sinh'],
+  ['color', 'Màu sắc'],
+  ['colors', 'Màu sắc'],
+  ['culture', 'Văn hóa'],
+  ['interest', 'Sở thích'],
+  ['interests', 'Sở thích'],
+  ['letter', 'Chữ cái'],
+  ['letters', 'Chữ cái'],
+  ['music', 'Âm nhạc'],
+  ['other', 'Khác'],
+  ['sport', 'Thể thao'],
+  ['sports', 'Thể thao'],
+  ['zodiac', 'Cung hoàng đạo'],
+]);
+
+export function formatCatalogCategory(category) {
+  return categoryLabels.get(category.toLocaleLowerCase()) ?? category;
+}
 
 function isNullableString(value) {
   return value == null || typeof value === 'string';
@@ -31,7 +52,7 @@ export function normalizeCatalog(response) {
       id: String(charm.id),
       name: charm.name,
       description: charm.description,
-      category: charm.category || 'Other',
+      category: charm.category || 'Khác',
       availabilityStatus: charm.stockStatus,
       available: charm.available,
       imageUrl: charm.imageUrl,

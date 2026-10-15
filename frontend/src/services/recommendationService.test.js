@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  buildRecommendationPayload,
   normalizeGroupedRecommendation,
   submitRecommendationProfile,
 } from './recommendationService.js';
@@ -106,6 +107,22 @@ test('submits the approved profile payload and maps the backend response', async
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('maps Vietnamese suggestion values to existing backend rule values', () => {
+  assert.deepEqual(buildRecommendationPayload({
+    fullName: 'Lâm Phú Bảo Anh',
+    birthDate: '2006-07-24',
+    interests: 'Âm nhạc, bóng đá, ô tô',
+    favoriteAnimal: 'Mèo',
+    favoriteColor: 'Xanh dương',
+  }), {
+    fullName: 'Lâm Phú Bảo Anh',
+    birthDate: '2006-07-24',
+    interests: ['music', 'football', 'cars'],
+    favoriteAnimal: 'cat',
+    favoriteColor: 'blue',
+  });
 });
 
 test('rejects missing, duplicate, unknown, oversized, and invalid-source sections', async (context) => {

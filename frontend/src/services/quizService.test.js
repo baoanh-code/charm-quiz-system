@@ -5,6 +5,8 @@ import {
   normalizeAnswerResult,
   normalizeQuizResult,
   normalizeQuizSession,
+  startQuizSession,
+  submitQuizAnswer,
 } from './quizService.js';
 
 test('normalizes a 10-question quiz session without exposing answer correctness', () => {
@@ -81,6 +83,81 @@ test('uses backend result details and retry permission when returned', async () 
   assert.equal(result.rewardEligible, true);
   assert.equal(result.canRetry, false);
   assert.equal(result.details[0].question, 'Backend detail');
+});
+
+test('prefers backend reward eligibility when it is present', () => {
+  const answers = Array.from({ length: 10 }, (_, index) => ({ isCorrect: index < 6 }));
+  const result = normalizeQuizResult({
+    score: 6,
+    correctCount: 6,
+    incorrectCount: 4,
+    rewardEligible: false,
+    details: [],
+  }, answers);
+
+  assert.equal(result.rewardEligible, false);
+});
+
+test('customer quiz API flow stays public and uses exact start answer and result contracts', async () => {
+  const originalFetch = globalThis.fetch;
+  const requests = [];
+  const backendQuestions = Array.from({ length: 10 }, (_, index) => ({
+    id: `question-${index + 1}`,
+    prompt: `Question ${index + 1}`,
+    options: ['A', 'B', 'C', 'D'].map((label, optionIndex) => ({
+      id: `question-${index + 1}-option-${optionIndex + 1}`,
+      label,
+    })),
+  }));
+  const responses = [
+    { sessionId: 'session-1', questions: backendQuestions },
+    { isCorrect: true, correctOptionId: 'question-1-option-1', explanation: 'Correct.' },
+    {
+      score: 6,
+      correctCount: 6,
+      incorrectCount: 4,
+      rewardEligible: true,
+      details: [],
+    },
+  ];
+  globalThis.fetch = async (url, options) => {
+    requests.push({ url, options });
+    return new Response(JSON.stringify(responses.shift()), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    const session = await startQuizSession();
+    const answer = await submitQuizAnswer({
+      sessionId: session.sessionId,
+      questionId: session.questions[0].id,
+      optionId: session.questions[0].options[0].id,
+    });
+    const answers = Array.from({ length: 10 }, (_, index) => ({ isCorrect: index < 6 }));
+    const result = await loadQuizResult({ sessionId: session.sessionId, answers });
+
+    assert.equal(session.questions.length, 10);
+    assert.equal('correctIndex' in session.questions[0], false);
+    assert.equal(answer.isCorrect, true);
+    assert.equal(result.rewardEligible, true);
+    assert.equal(requests[0].url, 'http://localhost:8080/api/quiz/start');
+    assert.equal(requests[0].options.headers.Authorization, undefined);
+    assert.equal(requests[1].url, 'http://localhost:8080/api/quiz/answer');
+    assert.deepEqual(JSON.parse(requests[1].options.body), {
+      sessionId: 'session-1',
+      questionId: 'question-1',
+      optionId: 'question-1-option-1',
+    });
+    assert.equal(
+      requests[2].url,
+      'http://localhost:8080/api/quiz/result?sessionId=session-1',
+    );
+    assert.equal(requests[2].options.headers.Authorization, undefined);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('rejects inconsistent backend result totals', () => {

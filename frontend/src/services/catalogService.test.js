@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { setImmediate } from 'node:timers';
-import { isRealtimeStale, normalizeCatalog, watchCatalog } from './catalogService.js';
+import {
+  formatCatalogCategory,
+  isRealtimeStale,
+  normalizeCatalog,
+  watchCatalog,
+} from './catalogService.js';
 
 const flush = () => new Promise(setImmediate);
 
@@ -28,10 +33,16 @@ test('normalizes the exact catalog API contract and keeps out-of-stock charms vi
   ]);
 
   assert.equal(charms.length, 2);
-  assert.equal(charms[0].category, 'Other');
+  assert.equal(charms[0].category, 'Khác');
   assert.equal(charms[0].availabilityStatus, 'IN_STOCK');
   assert.equal(charms[1].availabilityStatus, 'OUT_OF_STOCK');
   assert.equal(charms[1].available, false);
+});
+
+test('formats known catalog categories in Vietnamese without changing unknown data', () => {
+  assert.equal(formatCatalogCategory('Animals'), 'Động vật');
+  assert.equal(formatCatalogCategory('music'), 'Âm nhạc');
+  assert.equal(formatCatalogCategory('Bộ sưu tập Tết'), 'Bộ sưu tập Tết');
 });
 
 test('rejects invalid or contradictory catalog stock data', () => {

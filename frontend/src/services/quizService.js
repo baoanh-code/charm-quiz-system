@@ -9,62 +9,62 @@ const RESULT_ENDPOINT = '/quiz/result';
 const sampleQuestions = [
   {
     id: 'trung-sisters',
-    prompt: 'Who led an uprising against Han rule in 40 CE?',
-    options: ['The Trung Sisters', 'Tran Hung Dao', 'Le Loi', 'Quang Trung'],
+    prompt: 'Ai đã lãnh đạo cuộc khởi nghĩa chống ách đô hộ nhà Hán vào năm 40?',
+    options: ['Hai Bà Trưng', 'Trần Hưng Đạo', 'Lê Lợi', 'Quang Trung'],
     correctIndex: 0,
   },
   {
     id: 'bach-dang',
-    prompt: 'Which river is linked to major Vietnamese victories using wooden stakes?',
-    options: ['Red River', 'Perfume River', 'Bach Dang River', 'Mekong River'],
+    prompt: 'Con sông nào gắn liền với những chiến thắng lớn nhờ trận địa cọc gỗ?',
+    options: ['Sông Hồng', 'Sông Hương', 'Sông Bạch Đằng', 'Sông Mê Kông'],
     correctIndex: 2,
   },
   {
     id: 'tran-hung-dao',
-    prompt: 'Tran Hung Dao is best known for resisting which empire?',
-    options: ['Roman Empire', 'Mongol Empire', 'Ottoman Empire', 'British Empire'],
+    prompt: 'Trần Hưng Đạo nổi tiếng với cuộc kháng chiến chống đế quốc nào?',
+    options: ['Đế quốc La Mã', 'Đế quốc Mông Cổ', 'Đế quốc Ottoman', 'Đế quốc Anh'],
     correctIndex: 1,
   },
   {
     id: 'le-loi',
-    prompt: 'Which hero is connected with the legend of the returned sword at Hoan Kiem Lake?',
-    options: ['Le Loi', 'Dinh Bo Linh', 'Gia Long', 'Phan Boi Chau'],
+    prompt: 'Vị anh hùng nào gắn với truyền thuyết trả gươm tại hồ Hoàn Kiếm?',
+    options: ['Lê Lợi', 'Đinh Bộ Lĩnh', 'Gia Long', 'Phan Bội Châu'],
     correctIndex: 0,
   },
   {
     id: 'hue',
-    prompt: 'Which city served as the imperial capital under the Nguyen dynasty?',
-    options: ['Da Nang', 'Can Tho', 'Hue', 'Hai Phong'],
+    prompt: 'Thành phố nào là kinh đô dưới triều Nguyễn?',
+    options: ['Đà Nẵng', 'Cần Thơ', 'Huế', 'Hải Phòng'],
     correctIndex: 2,
   },
   {
     id: 'dong-son',
-    prompt: 'Dong Son culture is famous for which artifact?',
-    options: ['Bronze drums', 'Stone castles', 'Paper fans', 'Glass mosaics'],
+    prompt: 'Văn hóa Đông Sơn nổi tiếng với hiện vật nào?',
+    options: ['Trống đồng', 'Thành đá', 'Quạt giấy', 'Tranh ghép kính'],
     correctIndex: 0,
   },
   {
     id: 'dien-bien-phu',
-    prompt: 'The Battle of Dien Bien Phu took place in which year?',
+    prompt: 'Chiến thắng Điện Biên Phủ diễn ra vào năm nào?',
     options: ['1945', '1954', '1968', '1975'],
     correctIndex: 1,
   },
   {
     id: 'declaration',
-    prompt: 'Vietnam declared independence in Ba Dinh Square in which city?',
-    options: ['Hanoi', 'Hue', 'Saigon', 'Nha Trang'],
+    prompt: 'Việt Nam tuyên bố độc lập tại Quảng trường Ba Đình thuộc thành phố nào?',
+    options: ['Hà Nội', 'Huế', 'Sài Gòn', 'Nha Trang'],
     correctIndex: 0,
   },
   {
     id: 'quang-trung',
-    prompt: 'Quang Trung was the imperial title of which Tay Son leader?',
-    options: ['Nguyen Hue', 'Nguyen Trai', 'Mac Dang Dung', 'Ly Thai To'],
+    prompt: 'Quang Trung là niên hiệu của vị lãnh tụ Tây Sơn nào?',
+    options: ['Nguyễn Huệ', 'Nguyễn Trãi', 'Mạc Đăng Dung', 'Lý Thái Tổ'],
     correctIndex: 0,
   },
   {
     id: 'van-mieu',
-    prompt: 'The Temple of Literature in Hanoi is associated with which tradition?',
-    options: ['Maritime trade', 'Classical education', 'Royal cuisine', 'Silk weaving'],
+    prompt: 'Văn Miếu tại Hà Nội gắn liền với truyền thống nào?',
+    options: ['Giao thương đường biển', 'Giáo dục Nho học', 'Ẩm thực cung đình', 'Dệt lụa'],
     correctIndex: 1,
   },
 ];
@@ -74,7 +74,7 @@ const mockAnswers = new Map(
     question.id,
     {
       correctOptionId: `${question.id}-${question.correctIndex}`,
-      explanation: 'Nice history instinct. Keep going.',
+      explanation: 'Bạn có trực giác lịch sử rất tốt. Hãy tiếp tục nhé!',
     },
   ]),
 );
@@ -82,7 +82,7 @@ const mockAnswers = new Map(
 export function makePreviewQuizBank() {
   return {
     id: 'preview-vietnam-history',
-    title: 'Vietnam History',
+    title: 'Lịch sử Việt Nam',
     questions: sampleQuestions.map((question) => ({
       id: question.id,
       prompt: question.prompt,
@@ -92,7 +92,7 @@ export function makePreviewQuizBank() {
   };
 }
 
-export const isQuizPreview = import.meta.env?.VITE_QUIZ_SOURCE !== 'api';
+export const isQuizPreview = import.meta.env?.VITE_QUIZ_SOURCE === 'preview';
 
 function getArray(value, keys) {
   for (const key of keys) {
@@ -110,7 +110,7 @@ function normalizeOption(option, index, questionId) {
 
   return {
     id: String(id),
-    label: String(label ?? `Option ${index + 1}`),
+    label: String(label ?? `Lựa chọn ${index + 1}`),
   };
 }
 
@@ -187,13 +187,17 @@ export function normalizeQuizResult(response, answers, { allowRetry = false } = 
   }
 
   const retryAllowed = response?.canRetry ?? response?.retryAllowed ?? allowRetry;
+  const backendRewardEligible = response?.rewardEligible ?? response?.reward_eligible;
+  if (backendRewardEligible != null && typeof backendRewardEligible !== 'boolean') {
+    throw new Error('Unexpected quiz result response');
+  }
 
   return {
     score,
     correctCount,
     incorrectCount,
     totalQuestions: QUIZ_LENGTH,
-    rewardEligible: score >= 6,
+    rewardEligible: backendRewardEligible ?? score >= 6,
     canRetry: retryAllowed === true,
     details: details.map((detail, index) => ({
       id: String(detail?.questionId ?? detail?.id ?? index + 1),
