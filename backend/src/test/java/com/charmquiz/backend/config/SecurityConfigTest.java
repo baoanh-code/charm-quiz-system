@@ -1,6 +1,8 @@
 package com.charmquiz.backend.config;
 
 import com.charmquiz.backend.dto.RecommendationResponse;
+import com.charmquiz.backend.dto.QuizAnswerResponse;
+import com.charmquiz.backend.dto.QuizResultResponse;
 import com.charmquiz.backend.dto.QuizSessionResponse;
 import com.charmquiz.backend.service.RecommendationService;
 import com.charmquiz.backend.service.SupabaseCharmStorageService;
@@ -8,6 +10,7 @@ import com.charmquiz.backend.service.SupabaseCharmService;
 import com.charmquiz.backend.service.SupabaseManagerAuthorizationService;
 import com.charmquiz.backend.service.SupabaseManagerCharmService;
 import com.charmquiz.backend.service.SupabaseManagerRecommendationRuleService;
+import com.charmquiz.backend.service.SupabaseQuizAnswerService;
 import com.charmquiz.backend.service.SupabaseQuizService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -145,6 +148,9 @@ class SecurityConfigTest {
     @MockitoBean
     private SupabaseQuizService quizService;
 
+    @MockitoBean
+    private SupabaseQuizAnswerService quizAnswerService;
+
     @BeforeEach
     void configurePublicResponses() {
         when(charmService.getCatalogCharms()).thenReturn(List.of());
@@ -155,6 +161,14 @@ class SecurityConfigTest {
                         "99999999-9999-9999-9999-999999999999",
                         List.of()
                 ));
+        when(quizAnswerService.submitAnswer(any()))
+                .thenReturn(new QuizAnswerResponse(
+                        true,
+                        "22222222-2222-2222-2222-222222222222",
+                        null
+                ));
+        when(quizAnswerService.getResult(any()))
+                .thenReturn(new QuizResultResponse(6, 6, 4, true, List.of()));
     }
 
     @Test
@@ -372,12 +386,29 @@ class SecurityConfigTest {
         mockMvc.perform(post("/api/quiz/start")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer not-a-jwt"))
                 .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/quiz/answer")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer not-a-jwt")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validQuizAnswerRequest()))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/quiz/result")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer not-a-jwt")
+                        .param("sessionId", "99999999-9999-9999-9999-999999999999"))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void quizStartIsPublicWithoutTokenAndManagerEndpointsRemainProtected() throws Exception {
+    void everyQuizEndpointIsPublicWithoutTokenAndManagerEndpointsRemainProtected()
+            throws Exception {
         mockMvc.perform(post("/api/quiz/start"))
                 .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/quiz/answer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validQuizAnswerRequest()))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/quiz/result")
+                        .param("sessionId", "99999999-9999-9999-9999-999999999999"))
+                .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/manager/charms"))
                 .andExpect(status().isUnauthorized());
@@ -405,6 +436,16 @@ class SecurityConfigTest {
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "Authorization"))
                 .andExpect(status().isForbidden())
                 .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+    }
+
+    private String validQuizAnswerRequest() {
+        return """
+                {
+                  "sessionId":"99999999-9999-9999-9999-999999999999",
+                  "questionId":"11111111-1111-1111-1111-111111111111",
+                  "optionId":"22222222-2222-2222-2222-222222222222"
+                }
+                """;
     }
 
     private String validToken() throws JOSEException {
