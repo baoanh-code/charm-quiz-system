@@ -2,8 +2,10 @@ package com.charmquiz.backend.config;
 
 import com.charmquiz.backend.dto.RecommendationResponse;
 import com.charmquiz.backend.service.RecommendationService;
+import com.charmquiz.backend.service.SupabaseCharmStorageService;
 import com.charmquiz.backend.service.SupabaseCharmService;
 import com.charmquiz.backend.service.SupabaseManagerAuthorizationService;
+import com.charmquiz.backend.service.SupabaseManagerCharmService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -49,8 +51,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -125,6 +130,12 @@ class SecurityConfigTest {
     @MockitoBean
     private RecommendationService recommendationService;
 
+    @MockitoBean
+    private SupabaseManagerCharmService managerCharmService;
+
+    @MockitoBean
+    private SupabaseCharmStorageService charmStorageService;
+
     @BeforeEach
     void configurePublicResponses() {
         when(charmService.getCatalogCharms()).thenReturn(List.of());
@@ -142,6 +153,48 @@ class SecurityConfigTest {
     void managerBasePathIsProtected() throws Exception {
         mockMvc.perform(get("/api/manager"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void everyManagerCharmEndpointRequiresAuthentication() throws Exception {
+        String id = "11111111-1111-1111-1111-111111111111";
+
+        mockMvc.perform(get("/api/manager/charms"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/manager/charms/{id}", id))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/manager/charms"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(put("/api/manager/charms/{id}", id))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(patch("/api/manager/charms/{id}/status", id))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(patch("/api/manager/charms/{id}/stock-status", id))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(multipart("/api/manager/charm-images"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void nonManagerCannotReachManagerCharmController() throws Exception {
+        when(managerAuthorizationService.isManager(USER_ID)).thenReturn(false);
+
+        mockMvc.perform(get("/api/manager/charms")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(validToken())))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void validManagerReachesManagerCharmController() throws Exception {
+        when(managerAuthorizationService.isManager(USER_ID)).thenReturn(true);
+        when(managerCharmService.getAllCharms()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/manager/charms")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(validToken())))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+
+        verify(managerCharmService).getAllCharms();
     }
 
     @Test
