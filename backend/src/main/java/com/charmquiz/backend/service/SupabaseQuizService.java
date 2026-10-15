@@ -15,13 +15,16 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Service
 public class SupabaseQuizService {
@@ -33,6 +36,7 @@ public class SupabaseQuizService {
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
+    private final Consumer<List<QuizOptionResponse>> optionShuffler;
 
     @Autowired
     public SupabaseQuizService(
@@ -46,20 +50,30 @@ public class SupabaseQuizService {
     }
 
     SupabaseQuizService(RestClient restClient, ObjectMapper objectMapper) {
+        this(restClient, objectMapper, Collections::shuffle);
+    }
+
+    SupabaseQuizService(
+            RestClient restClient,
+            ObjectMapper objectMapper,
+            Consumer<List<QuizOptionResponse>> optionShuffler) {
         this.restClient = restClient;
         this.objectMapper = objectMapper;
+        this.optionShuffler = optionShuffler;
     }
 
     public QuizSessionResponse startSession() {
         UUID quizId = getOnlyActiveQuizId();
         List<QuestionRow> questionRows = getValidQuestions(quizId);
+        Map<UUID, List<QuizOptionResponse>> optionsByQuestion =
+                getValidOptions(questionRows);
         List<QuizQuestionResponse> questions = new ArrayList<>(QUIZ_LENGTH);
 
         for (QuestionRow question : questionRows) {
             questions.add(new QuizQuestionResponse(
                     question.id().toString(),
                     question.prompt(),
-                    getValidOptions(question.id())
+                    optionsByQuestion.get(question.id())
             ));
         }
 
@@ -106,31 +120,51 @@ public class SupabaseQuizService {
         return List.copyOf(questions);
     }
 
-    private List<QuizOptionResponse> getValidOptions(UUID questionId) {
-        String rawJson = execute(() -> restClient.post()
-                .uri("/rpc/get_quiz_options?select=" + OPTION_COLUMNS)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("p_question_id", questionId.toString()))
+    private Map<UUID, List<QuizOptionResponse>> getValidOptions(
+            List<QuestionRow> questions) {
+        Set<UUID> questionIds = questions.stream()
+                .map(QuestionRow::id)
+                .collect(Collectors.toUnmodifiableSet());
+        String questionIdFilter = questions.stream()
+                .map(question -> question.id().toString())
+                .collect(Collectors.joining(","));
+
+        String rawJson = execute(() -> restClient.get()
+                .uri("/quiz_option?question_id=in.(" + questionIdFilter + ")"
+                        + "&select=" + OPTION_COLUMNS)
                 .retrieve()
                 .body(String.class));
         List<Map<String, Object>> rows = parseRows(rawJson);
-        if (rows.size() != OPTIONS_PER_QUESTION) {
-            throw new QuizUnavailableException();
+
+        Map<UUID, List<QuizOptionResponse>> optionsByQuestion =
+                new LinkedHashMap<>();
+        Map<UUID, Set<UUID>> optionIdsByQuestion = new LinkedHashMap<>();
+        for (QuestionRow question : questions) {
+            optionsByQuestion.put(question.id(), new ArrayList<>(OPTIONS_PER_QUESTION));
+            optionIdsByQuestion.put(question.id(), new HashSet<>());
         }
 
-        Set<UUID> optionIds = new HashSet<>();
-        List<QuizOptionResponse> options = new ArrayList<>(OPTIONS_PER_QUESTION);
         for (Map<String, Object> row : rows) {
             UUID optionId = parseUuid(row, "id");
             UUID returnedQuestionId = parseUuid(row, "question_id");
             String label = requiredContent(row, "option_text");
-            if (!questionId.equals(returnedQuestionId)
-                    || !optionIds.add(optionId)) {
+            if (!questionIds.contains(returnedQuestionId)
+                    || !optionIdsByQuestion.get(returnedQuestionId).add(optionId)) {
                 throw new QuizUnavailableException();
             }
-            options.add(new QuizOptionResponse(optionId.toString(), label));
+            optionsByQuestion.get(returnedQuestionId)
+                    .add(new QuizOptionResponse(optionId.toString(), label));
         }
-        return List.copyOf(options);
+
+        for (QuestionRow question : questions) {
+            List<QuizOptionResponse> options = optionsByQuestion.get(question.id());
+            if (options.size() != OPTIONS_PER_QUESTION) {
+                throw new QuizUnavailableException();
+            }
+            optionShuffler.accept(options);
+            optionsByQuestion.put(question.id(), List.copyOf(options));
+        }
+        return Map.copyOf(optionsByQuestion);
     }
 
     private UUID insertSession(UUID quizId) {

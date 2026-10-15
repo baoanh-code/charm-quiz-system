@@ -11,6 +11,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -40,16 +41,16 @@ class SupabaseQuizServiceTest {
                 .baseUrl("https://project.supabase.co/rest/v1")
                 .defaultHeader("apikey", SECRET);
         server = MockRestServiceServer.bindTo(builder).build();
-        service = new SupabaseQuizService(builder.build(), new ObjectMapper());
+        service = new SupabaseQuizService(
+                builder.build(), new ObjectMapper(), Collections::reverse);
     }
 
     @Test
-    void startsValidatedSessionUsingExplicitActiveQueriesAndPreservesOptionOrder() {
+    void startsValidatedSessionUsingOneBatchOptionQueryAndShufflesOptions()
+            throws Exception {
         expectActiveQuiz();
         expectQuestions(questionRows(10, false, false));
-        for (int index = 0; index < 10; index++) {
-            expectOptions(index, validOptions(index));
-        }
+        expectBatchOptions(allValidOptions());
         expectSessionInsert(SESSION_ID);
 
         QuizSessionResponse result = service.startSession();
@@ -66,7 +67,9 @@ class SupabaseQuizServiceTest {
         });
         assertThat(result.questions().getFirst().options())
                 .extracting(option -> option.label())
-                .containsExactly("Option 3", "Option 1", "Option 4", "Option 2");
+                .containsExactly("Option 4", "Option 3", "Option 2", "Option 1");
+        assertThat(new ObjectMapper().writeValueAsString(result))
+                .doesNotContain("correct", "is_correct", "isCorrect");
         server.verify();
     }
 
@@ -126,7 +129,8 @@ class SupabaseQuizServiceTest {
             server.reset();
             expectActiveQuiz();
             expectQuestions(questionRows(10, false, false));
-            expectOptions(0, optionRows(0, count, false, false, false));
+            expectBatchOptions(optionsWithFirstQuestion(
+                    optionRows(0, count, false, false, false)));
 
             assertThatThrownBy(service::startSession)
                     .isInstanceOf(QuizUnavailableException.class);
@@ -135,10 +139,24 @@ class SupabaseQuizServiceTest {
     }
 
     @Test
-    void duplicateWrongQuestionAndBlankOptionsFailClosed() {
-        assertInvalidOptions(optionRows(0, 4, true, false, false));
-        assertInvalidOptions(optionRows(0, 4, false, true, false));
-        assertInvalidOptions(optionRows(0, 4, false, false, true));
+    void unknownQuestionIdInBatchResponseFailsBeforeSessionInsert() {
+        String options = allValidOptions();
+        String withUnknownQuestion = options.substring(0, options.length() - 1)
+                + "," + optionJson(
+                        UUID.fromString("00000000-0000-0000-0003-000000000001"),
+                        questionId(10),
+                        "Unknown question option")
+                + "]";
+
+        assertInvalidOptions(withUnknownQuestion);
+    }
+
+    @Test
+    void duplicateOptionIdsAndBlankOptionsFailBeforeSessionInsert() {
+        assertInvalidOptions(optionsWithFirstQuestion(
+                optionRows(0, 4, true, false, false)));
+        assertInvalidOptions(optionsWithFirstQuestion(
+                optionRows(0, 4, false, false, true)));
     }
 
     @Test
@@ -176,7 +194,7 @@ class SupabaseQuizServiceTest {
         server.reset();
         expectActiveQuiz();
         expectQuestions(questionRows(10, false, false));
-        expectOptions(0, optionsJson);
+        expectBatchOptions(optionsJson);
         assertThatThrownBy(service::startSession)
                 .isInstanceOf(QuizUnavailableException.class);
         server.verify();
@@ -185,9 +203,7 @@ class SupabaseQuizServiceTest {
     private void expectSuccessfulStart(UUID sessionId) {
         expectActiveQuiz();
         expectQuestions(questionRows(10, false, false));
-        for (int index = 0; index < 10; index++) {
-            expectOptions(index, validOptions(index));
-        }
+        expectBatchOptions(allValidOptions());
         expectSessionInsert(sessionId);
     }
 
@@ -224,18 +240,18 @@ class SupabaseQuizServiceTest {
                 .andRespond(withSuccess(rows, MediaType.APPLICATION_JSON));
     }
 
-    private void expectOptions(int questionIndex, String rows) {
-        UUID questionId = questionId(questionIndex);
+    private void expectBatchOptions(String rows) {
         server.expect(request -> {
+                    assertThat(request.getMethod().name()).isEqualTo("GET");
                     assertThat(request.getURI().getPath())
-                            .isEqualTo("/rest/v1/rpc/get_quiz_options");
+                            .isEqualTo("/rest/v1/quiz_option");
                     assertThat(request.getURI().getQuery())
-                            .isEqualTo("select=" + SupabaseQuizService.OPTION_COLUMNS)
+                            .contains("question_id=in.(" + questionIdFilter() + ")")
+                            .contains("select=" + SupabaseQuizService.OPTION_COLUMNS)
                             .doesNotContain("is_correct")
+                            .doesNotContain("get_quiz_options")
                             .doesNotContain("select=*");
                 })
-                .andExpect(content().json("{\"p_question_id\":\"" + questionId + "\"}"))
-                .andExpect(content().string(not(containsString("correct"))))
                 .andRespond(withSuccess(rows, MediaType.APPLICATION_JSON));
     }
 
@@ -283,8 +299,7 @@ class SupabaseQuizServiceTest {
     }
 
     private String validOptions(int questionIndex) {
-        int[] order = {2, 0, 3, 1};
-        return "[" + IntStream.of(order)
+        return "[" + IntStream.range(0, 4)
                 .mapToObj(optionIndex -> optionJson(
                         optionId(questionIndex, optionIndex),
                         questionId(questionIndex),
@@ -292,6 +307,33 @@ class SupabaseQuizServiceTest {
                 ))
                 .reduce((left, right) -> left + "," + right)
                 .orElse("") + "]";
+    }
+
+    private String allValidOptions() {
+        return "[" + IntStream.range(0, 10)
+                .mapToObj(index -> withoutArrayBrackets(validOptions(index)))
+                .reduce((left, right) -> left + "," + right)
+                .orElse("") + "]";
+    }
+
+    private String optionsWithFirstQuestion(String firstQuestionOptions) {
+        String remaining = IntStream.range(1, 10)
+                .mapToObj(index -> withoutArrayBrackets(validOptions(index)))
+                .reduce((left, right) -> left + "," + right)
+                .orElse("");
+        return "[" + withoutArrayBrackets(firstQuestionOptions)
+                + "," + remaining + "]";
+    }
+
+    private String withoutArrayBrackets(String jsonArray) {
+        return jsonArray.substring(1, jsonArray.length() - 1);
+    }
+
+    private String questionIdFilter() {
+        return IntStream.range(0, 10)
+                .mapToObj(index -> questionId(index).toString())
+                .reduce((left, right) -> left + "," + right)
+                .orElse("");
     }
 
     private String optionRows(
