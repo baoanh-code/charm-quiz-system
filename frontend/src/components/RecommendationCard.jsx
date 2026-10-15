@@ -3,7 +3,7 @@ import { recommendationSourceLabels } from '../services/recommendationService';
 
 function RecommendationCard({ recommendation, symbol, fallback, position }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const { charm, rank, displayOrder, reason, source } = recommendation;
+  const { charm, rank, displayOrder, source } = recommendation;
   const imageUrl = charm.imageUrl;
 
   return (
@@ -16,10 +16,10 @@ function RecommendationCard({ recommendation, symbol, fallback, position }) {
         )}
       </div>
       <div className="result-card__body">
-        <p className="result-card__rank">Pick {rank ?? displayOrder ?? position}{fallback ? ' / Alternative' : ''}</p>
+        <p className="result-card__rank">Gợi ý {rank ?? displayOrder ?? position}{fallback ? ' / Thay thế' : ''}</p>
         <h3>{charm.name}</h3>
-        {reason ? <p className="result-card__reason">{reason}</p> : null}
-        {source ? <p className="result-card__source">Source: {recommendationSourceLabels[source]}</p> : null}
+        {source ? <p className="result-card__reason">{recommendationSourceLabels[source].reason}</p> : null}
+        {source ? <p className="result-card__source">Nguồn: {recommendationSourceLabels[source].label}</p> : null}
       </div>
     </article>
   );

@@ -9,31 +9,31 @@ import FeatureCard from '../components/FeatureCard';
 const features = [
   {
     eyebrow: '01',
-    title: 'Get Charm Recommendation',
+    title: 'Nhận gợi ý charm',
     description:
-      'Answer a few quick prompts and move toward the charm that fits your purpose.',
+      'Trả lời vài câu hỏi nhanh để tìm charm phù hợp với bạn.',
     href: '/recommendation',
-    cta: 'Start recommendation',
+    cta: 'Bắt đầu nhận gợi ý',
     accent: 'red',
     image: recommendationImage,
   },
   {
     eyebrow: '02',
-    title: 'Browse Charm Catalog',
+    title: 'Xem danh mục charm',
     description:
-      'Explore charm options from the home page without waiting for a guided flow.',
+      'Khám phá các mẫu charm trực tiếp từ trang chủ mà không cần qua quy trình gợi ý.',
     href: '/catalog',
-    cta: 'View catalog',
+    cta: 'Xem danh mục',
     accent: 'coral',
     image: catalogImage,
   },
   {
     eyebrow: '03',
-    title: 'Play Vietnam History Quiz',
+    title: 'Chơi đố vui Lịch sử Việt Nam',
     description:
-      'Take a short quiz experience designed for quick mobile visits from a QR scan.',
+      'Tham gia bài đố vui ngắn, phù hợp khi truy cập nhanh bằng mã QR trên điện thoại.',
     href: '/history-quiz',
-    cta: 'Play quiz',
+    cta: 'Chơi ngay',
     accent: 'gold',
     image: historyImage,
   },
@@ -45,22 +45,22 @@ function Home() {
       <section className="hero-section" aria-labelledby="home-title">
         <div className="hero-copy">
           <p className="section-kicker hero-kicker">
-            <span aria-hidden="true">✦</span> Discover Vietnamese History
+            <span aria-hidden="true">✦</span> Khám phá lịch sử Việt Nam
           </p>
           <h1 id="home-title">
-            <span>Wear a Charm.</span>
-            <em>Carry a Story.</em>
+            <span>Đeo một chiếc charm.</span>
+            <em>Mang theo một câu chuyện.</em>
           </h1>
           <p className="hero-description">
-            Find the piece that connects your personality to a meaningful story.
+            Tìm chiếc charm kết nối cá tính của bạn với một câu chuyện đầy ý nghĩa.
           </p>
 
-          <div className="hero-actions" aria-label="Home page actions">
+          <div className="hero-actions" aria-label="Các thao tác trên trang chủ">
             <Link className="button button--primary" to="/recommendation">
-              Find Your Charm <span aria-hidden="true">↗</span>
+              Tìm charm dành cho bạn <span aria-hidden="true">↗</span>
             </Link>
             <Link className="button button--secondary" to="/catalog">
-              Explore Collection
+              Khám phá bộ sưu tập
             </Link>
           </div>
         </div>
@@ -68,15 +68,15 @@ function Home() {
         <div className="hero-media">
           <div className="hero-visual" aria-hidden="true">
             <img className="hero-visual__image" src={heroImage} alt="" />
-            <p className="hero-visual__caption">Inspired by<br />Vietnamese Heritage</p>
+            <p className="hero-visual__caption">Cảm hứng từ<br />di sản Việt Nam</p>
           </div>
-          <p className="hero-image-note">Images are for illustrative purposes only.</p>
+          <p className="hero-image-note">Hình ảnh chỉ mang tính chất minh họa.</p>
         </div>
       </section>
 
       <section className="features-section" aria-labelledby="features-title">
         <div className="section-heading">
-          <h2 id="features-title">Start your <em>journey</em></h2>
+          <h2 id="features-title">Bắt đầu <em>hành trình</em> của bạn</h2>
         </div>
 
         <div className="feature-grid">

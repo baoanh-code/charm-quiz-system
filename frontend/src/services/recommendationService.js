@@ -1,21 +1,59 @@
 import { getRecommendation } from './api.js';
 
 export const recommendationGroups = [
-  { key: 'name', type: 'NAME', title: 'Your name', number: '01', symbol: 'Aa' },
-  { key: 'birthDate', type: 'BIRTH_DATE', title: 'Birth date', number: '02', symbol: '*' },
-  { key: 'interests', type: 'INTERESTS', title: 'Interests', number: '03', symbol: 'I' },
-  { key: 'favoriteAnimal', type: 'FAVORITE_ANIMAL', title: 'Favorite animal', number: '04', symbol: 'A' },
-  { key: 'favoriteColor', type: 'FAVORITE_COLOR', title: 'Favorite color', number: '05', symbol: 'C' },
+  { key: 'name', type: 'NAME', title: 'Theo tên', number: '01', symbol: 'Aa' },
+  { key: 'birthDate', type: 'BIRTH_DATE', title: 'Theo ngày sinh', number: '02', symbol: '*' },
+  { key: 'interests', type: 'INTERESTS', title: 'Theo sở thích', number: '03', symbol: 'I' },
+  { key: 'favoriteAnimal', type: 'FAVORITE_ANIMAL', title: 'Theo động vật yêu thích', number: '04', symbol: 'A' },
+  { key: 'favoriteColor', type: 'FAVORITE_COLOR', title: 'Theo màu sắc yêu thích', number: '05', symbol: 'C' },
 ];
 
 export const recommendationSourceLabels = {
-  RULE: 'Rule match',
-  AI: 'AI selection',
-  LOCAL_FALLBACK: 'Local fallback',
+  RULE: {
+    label: 'Quy tắc phù hợp',
+    reason: 'Phù hợp với thông tin bạn đã cung cấp.',
+  },
+  AI: {
+    label: 'Gợi ý từ AI',
+    reason: 'Được chọn dựa trên thông tin bạn đã cung cấp.',
+  },
+  LOCAL_FALLBACK: {
+    label: 'Gợi ý thay thế',
+    reason: 'Gợi ý gần nhất dựa trên thông tin bạn đã cung cấp.',
+  },
 };
 
 const sectionByType = new Map(recommendationGroups.map((group) => [group.type, group]));
 const validSources = new Set(Object.keys(recommendationSourceLabels));
+
+const customerInputAliases = {
+  interests: new Map([
+    ['âm nhạc', 'music'],
+    ['bóng đá', 'football'],
+    ['ô tô', 'cars'],
+    ['xe hơi', 'cars'],
+  ]),
+  favoriteAnimal: new Map([
+    ['mèo', 'cat'],
+    ['chó', 'dog'],
+    ['thỏ', 'rabbit'],
+    ['rồng', 'dragon'],
+    ['bướm', 'butterfly'],
+  ]),
+  favoriteColor: new Map([
+    ['đỏ', 'red'],
+    ['xanh dương', 'blue'],
+    ['hồng', 'pink'],
+    ['xanh lá', 'green'],
+    ['vàng', 'gold'],
+    ['tím', 'purple'],
+  ]),
+};
+
+function toBackendValue(value, aliases) {
+  const trimmed = value.trim();
+  return aliases.get(trimmed.toLocaleLowerCase('vi')) ?? trimmed;
+}
 
 export function buildRecommendationPayload(profile) {
   return {
@@ -23,10 +61,10 @@ export function buildRecommendationPayload(profile) {
     birthDate: profile.birthDate,
     interests: profile.interests
       .split(',')
-      .map((interest) => interest.trim())
+      .map((interest) => toBackendValue(interest, customerInputAliases.interests))
       .filter(Boolean),
-    favoriteAnimal: profile.favoriteAnimal.trim(),
-    favoriteColor: profile.favoriteColor.trim(),
+    favoriteAnimal: toBackendValue(profile.favoriteAnimal, customerInputAliases.favoriteAnimal),
+    favoriteColor: toBackendValue(profile.favoriteColor, customerInputAliases.favoriteColor),
   };
 }
 

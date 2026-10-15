@@ -1,14 +1,15 @@
 import { useState } from 'react';
+import { formatCatalogCategory } from '../services/catalogService';
 
 function CatalogCard({ charm }) {
   const [failedUrl, setFailedUrl] = useState(null);
   const imageUrl = charm.thumbnailUrl || charm.imageUrl;
   const hasImage = imageUrl && failedUrl !== imageUrl;
   const stockLabel = charm.availabilityStatus === 'IN_STOCK'
-    ? 'In Stock'
+    ? 'Còn hàng'
     : charm.availabilityStatus === 'OUT_OF_STOCK'
-      ? 'Out of Stock'
-      : 'Check Availability';
+      ? 'Hết hàng'
+      : 'Kiểm tra tình trạng hàng';
   const symbol = charm.category === 'Letters'
     ? charm.name.replace(/^Letter\s+/, '').charAt(0)
     : charm.name.charAt(0);
@@ -31,7 +32,7 @@ function CatalogCard({ charm }) {
         )}
       </div>
       <div className="catalog-card__body">
-        <p className="catalog-card__category">{charm.category}</p>
+        <p className="catalog-card__category">{formatCatalogCategory(charm.category)}</p>
         <h2>{charm.name}</h2>
         <span className={`catalog-card__stock catalog-card__stock--${charm.availabilityStatus.toLowerCase()}`}>
           <span aria-hidden="true" />{stockLabel}
