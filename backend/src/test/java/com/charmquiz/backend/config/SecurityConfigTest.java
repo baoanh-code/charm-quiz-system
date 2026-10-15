@@ -6,6 +6,7 @@ import com.charmquiz.backend.service.SupabaseCharmStorageService;
 import com.charmquiz.backend.service.SupabaseCharmService;
 import com.charmquiz.backend.service.SupabaseManagerAuthorizationService;
 import com.charmquiz.backend.service.SupabaseManagerCharmService;
+import com.charmquiz.backend.service.SupabaseManagerRecommendationRuleService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -136,6 +137,9 @@ class SecurityConfigTest {
     @MockitoBean
     private SupabaseCharmStorageService charmStorageService;
 
+    @MockitoBean
+    private SupabaseManagerRecommendationRuleService managerRecommendationRuleService;
+
     @BeforeEach
     void configurePublicResponses() {
         when(charmService.getCatalogCharms()).thenReturn(List.of());
@@ -173,6 +177,44 @@ class SecurityConfigTest {
                 .andExpect(status().isUnauthorized());
         mockMvc.perform(multipart("/api/manager/charm-images"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void everyManagerRecommendationRuleEndpointRequiresAuthentication() throws Exception {
+        String id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+
+        mockMvc.perform(get("/api/manager/recommendation-rules"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/manager/recommendation-rules/{id}", id))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/manager/recommendation-rules"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(put("/api/manager/recommendation-rules/{id}", id))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(patch("/api/manager/recommendation-rules/{id}/status", id))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void nonManagerCannotReachManagerRecommendationRuleController() throws Exception {
+        when(managerAuthorizationService.isManager(USER_ID)).thenReturn(false);
+
+        mockMvc.perform(get("/api/manager/recommendation-rules")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(validToken())))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void validManagerReachesManagerRecommendationRuleController() throws Exception {
+        when(managerAuthorizationService.isManager(USER_ID)).thenReturn(true);
+        when(managerRecommendationRuleService.getAllRules()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/manager/recommendation-rules")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(validToken())))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+
+        verify(managerRecommendationRuleService).getAllRules();
     }
 
     @Test
