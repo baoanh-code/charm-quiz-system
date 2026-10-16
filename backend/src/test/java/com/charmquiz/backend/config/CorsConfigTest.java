@@ -48,6 +48,8 @@ class CorsConfigTest {
     private static final String ALLOWED_ORIGIN_REACT = "http://localhost:3000";
     private static final String ALLOWED_ORIGIN_PRODUCTION =
             "https://charm-quiz-frontend.onrender.com";
+    private static final String ALLOWED_ORIGIN_STORY_CHARM =
+            "https://storycharm.onrender.com";
 
     @Autowired
     private MockMvc mockMvc;
@@ -62,7 +64,8 @@ class CorsConfigTest {
     @ValueSource(strings = {
             ALLOWED_ORIGIN_VITE,
             ALLOWED_ORIGIN_REACT,
-            ALLOWED_ORIGIN_PRODUCTION
+            ALLOWED_ORIGIN_PRODUCTION,
+            ALLOWED_ORIGIN_STORY_CHARM
     })
     void allowsConfiguredFrontendOrigins(String origin) throws Exception {
         mockMvc.perform(get("/api/health")
@@ -107,7 +110,11 @@ class CorsConfigTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {ALLOWED_ORIGIN_VITE, ALLOWED_ORIGIN_PRODUCTION})
+    @ValueSource(strings = {
+            ALLOWED_ORIGIN_VITE,
+            ALLOWED_ORIGIN_PRODUCTION,
+            ALLOWED_ORIGIN_STORY_CHARM
+    })
     void allowsAuthorizationHeaderForManagerPreflight(String origin) throws Exception {
         mockMvc.perform(options("/api/manager/probe")
                         .header(HttpHeaders.ORIGIN, origin)
@@ -146,11 +153,11 @@ class CorsConfigTest {
         when(charmService.getCatalogCharms()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/charms")
-                        .header(HttpHeaders.ORIGIN, ALLOWED_ORIGIN_PRODUCTION))
+                        .header(HttpHeaders.ORIGIN, ALLOWED_ORIGIN_STORY_CHARM))
                 .andExpect(status().isOk())
                 .andExpect(header().string(
                         HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
-                        ALLOWED_ORIGIN_PRODUCTION
+                        ALLOWED_ORIGIN_STORY_CHARM
                 ))
                 .andExpect(content().json("[]"));
     }

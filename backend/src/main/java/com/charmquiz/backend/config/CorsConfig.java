@@ -13,7 +13,8 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                         "http://localhost:5173",
                         "http://localhost:3000",
-                        "https://charm-quiz-frontend.onrender.com"
+                        "https://charm-quiz-frontend.onrender.com",
+                        "https://storycharm.onrender.com"
                 )
                 .allowedMethods(
                         "GET",
