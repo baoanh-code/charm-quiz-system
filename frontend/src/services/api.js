@@ -1,8 +1,14 @@
 
 import { getSupabaseClient } from './supabaseClient.js';
 
-const API_BASE_URL =
-  import.meta.env?.VITE_API_BASE_URL || 'http://localhost:8080/api';
+export function normalizeApiBaseUrl(value) {
+  const baseUrl = value.trim().replace(/\/+$/, '');
+  return baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+}
+
+const API_BASE_URL = normalizeApiBaseUrl(
+  import.meta.env?.VITE_API_BASE_URL || 'http://localhost:8080/api',
+);
 
 export class ApiError extends Error {
   constructor(status, statusText, code, serverMessage) {

@@ -1,6 +1,22 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ApiError, getCharms, getRecommendation } from './api.js';
+import {
+  ApiError,
+  getCharms,
+  getRecommendation,
+  normalizeApiBaseUrl,
+} from './api.js';
+
+test('normalizes production backend host to the /api contract without duplicating it', () => {
+  assert.equal(
+    normalizeApiBaseUrl('https://charm-quiz-system.onrender.com'),
+    'https://charm-quiz-system.onrender.com/api',
+  );
+  assert.equal(
+    normalizeApiBaseUrl('https://charm-quiz-system.onrender.com/api/'),
+    'https://charm-quiz-system.onrender.com/api',
+  );
+});
 
 test('GET catalog uses the configured API boundary without a JSON content type', async () => {
   const originalFetch = globalThis.fetch;

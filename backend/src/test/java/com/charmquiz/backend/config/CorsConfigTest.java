@@ -46,6 +46,8 @@ class CorsConfigTest {
 
     private static final String ALLOWED_ORIGIN_VITE = "http://localhost:5173";
     private static final String ALLOWED_ORIGIN_REACT = "http://localhost:3000";
+    private static final String ALLOWED_ORIGIN_PRODUCTION =
+            "https://charm-quiz-frontend.onrender.com";
 
     @Autowired
     private MockMvc mockMvc;
@@ -57,7 +59,11 @@ class CorsConfigTest {
     private RecommendationService recommendationService;
 
     @ParameterizedTest
-    @ValueSource(strings = {ALLOWED_ORIGIN_VITE, ALLOWED_ORIGIN_REACT})
+    @ValueSource(strings = {
+            ALLOWED_ORIGIN_VITE,
+            ALLOWED_ORIGIN_REACT,
+            ALLOWED_ORIGIN_PRODUCTION
+    })
     void allowsConfiguredFrontendOrigins(String origin) throws Exception {
         mockMvc.perform(get("/api/health")
                         .header(HttpHeaders.ORIGIN, origin))
@@ -100,16 +106,17 @@ class CorsConfigTest {
                 ));
     }
 
-    @Test
-    void allowsAuthorizationHeaderForManagerPreflight() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = {ALLOWED_ORIGIN_VITE, ALLOWED_ORIGIN_PRODUCTION})
+    void allowsAuthorizationHeaderForManagerPreflight(String origin) throws Exception {
         mockMvc.perform(options("/api/manager/probe")
-                        .header(HttpHeaders.ORIGIN, ALLOWED_ORIGIN_VITE)
+                        .header(HttpHeaders.ORIGIN, origin)
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "Authorization"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(
                         HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
-                        ALLOWED_ORIGIN_VITE
+                        origin
                 ))
                 .andExpect(header().string(
                         HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
@@ -139,11 +146,11 @@ class CorsConfigTest {
         when(charmService.getCatalogCharms()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/charms")
-                        .header(HttpHeaders.ORIGIN, ALLOWED_ORIGIN_VITE))
+                        .header(HttpHeaders.ORIGIN, ALLOWED_ORIGIN_PRODUCTION))
                 .andExpect(status().isOk())
                 .andExpect(header().string(
                         HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
-                        ALLOWED_ORIGIN_VITE
+                        ALLOWED_ORIGIN_PRODUCTION
                 ))
                 .andExpect(content().json("[]"));
     }
