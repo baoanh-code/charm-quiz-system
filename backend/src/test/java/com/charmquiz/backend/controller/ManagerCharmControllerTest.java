@@ -16,6 +16,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,10 +25,12 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -44,6 +48,7 @@ class ManagerCharmControllerTest {
 
     private static final UUID CHARM_ID =
             UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final String MANAGER_ACCESS_TOKEN = "verified-manager-jwt";
 
     @Autowired
     private MockMvc mockMvc;
@@ -153,6 +158,14 @@ class ManagerCharmControllerTest {
     }
 
     @Test
+    void deletesCharm() throws Exception {
+        mockMvc.perform(delete("/api/manager/charms/{id}", CHARM_ID))
+                .andExpect(status().isNoContent());
+
+        verify(charmService).deleteCharm(CHARM_ID);
+    }
+
+    @Test
     void invalidUuidAndInvalidRequiredBodyReturnBadRequest() throws Exception {
         mockMvc.perform(get("/api/manager/charms/not-a-uuid"))
                 .andExpect(status().isBadRequest())
@@ -188,25 +201,31 @@ class ManagerCharmControllerTest {
         MockMultipartFile valid = new MockMultipartFile(
                 "file", "charm.png", "image/png", new byte[]{1, 2, 3}
         );
-        when(storageService.upload(any()))
+        when(storageService.upload(any(), eq(MANAGER_ACCESS_TOKEN)))
                 .thenReturn(new CharmImageUploadResponse(
                         "https://project.supabase.co/charm.png"
                 ))
                 .thenThrow(new ManagerValidationException("Invalid image."))
                 .thenThrow(new ManagerPayloadTooLargeException());
 
-        mockMvc.perform(multipart("/api/manager/charm-images").file(valid))
+        mockMvc.perform(multipart("/api/manager/charm-images").file(valid)
+                        .principal(managerAuthentication()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.imageUrl")
                         .value("https://project.supabase.co/charm.png"));
 
-        mockMvc.perform(multipart("/api/manager/charm-images").file(valid))
+        mockMvc.perform(multipart("/api/manager/charm-images").file(valid)
+                        .principal(managerAuthentication()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
 
-        mockMvc.perform(multipart("/api/manager/charm-images").file(valid))
+        mockMvc.perform(multipart("/api/manager/charm-images").file(valid)
+                        .principal(managerAuthentication()))
                 .andExpect(status().isContentTooLarge())
                 .andExpect(jsonPath("$.code").value("IMAGE_TOO_LARGE"));
+
+        verify(storageService, org.mockito.Mockito.times(3))
+                .upload(any(), eq(MANAGER_ACCESS_TOKEN));
     }
 
     private ManagerCharmResponse charm(
@@ -223,6 +242,14 @@ class ManagerCharmControllerTest {
                 status,
                 stockStatus
         );
+    }
+
+    private JwtAuthenticationToken managerAuthentication() {
+        Jwt jwt = Jwt.withTokenValue(MANAGER_ACCESS_TOKEN)
+                .header("alg", "ES256")
+                .claim("sub", CHARM_ID.toString())
+                .build();
+        return new JwtAuthenticationToken(jwt);
     }
 
     private String validBody() {

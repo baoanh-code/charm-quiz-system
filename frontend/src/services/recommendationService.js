@@ -6,6 +6,15 @@ export const recommendationGroups = [
   { key: 'interests', type: 'INTERESTS', title: 'Theo sở thích', number: '03', symbol: 'I' },
   { key: 'favoriteAnimal', type: 'FAVORITE_ANIMAL', title: 'Theo động vật yêu thích', number: '04', symbol: 'A' },
   { key: 'favoriteColor', type: 'FAVORITE_COLOR', title: 'Theo màu sắc yêu thích', number: '05', symbol: 'C' },
+  {
+    key: 'general',
+    type: 'GENERAL',
+    title: 'Gợi ý thêm',
+    subtitle: 'Một vài charm khác có thể bạn sẽ thích.',
+    number: '06',
+    symbol: '*',
+    maxRecommendations: 8,
+  },
 ];
 
 export const recommendationSourceLabels = {
@@ -20,6 +29,10 @@ export const recommendationSourceLabels = {
   LOCAL_FALLBACK: {
     label: 'Gợi ý thay thế',
     reason: 'Gợi ý gần nhất dựa trên thông tin bạn đã cung cấp.',
+  },
+  RANDOM: {
+    label: 'Gợi ý ngẫu nhiên',
+    reason: 'Một lựa chọn ngẫu nhiên từ các charm hiện có.',
   },
 };
 
@@ -111,7 +124,8 @@ export function normalizeGroupedRecommendation(response, profile) {
     if (!Array.isArray(section.input) || !Array.isArray(section.recommendations)) {
       throw new Error('Unexpected recommendation section');
     }
-    if (section.recommendations.length > 3) {
+    const maximumRecommendations = sectionByType.get(section.type).maxRecommendations ?? 3;
+    if (section.recommendations.length > maximumRecommendations) {
       throw new Error('Too many recommendations in section');
     }
 

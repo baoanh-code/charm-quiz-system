@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import CatalogCard from '../components/CatalogCard';
+import CharmCard from '../components/CharmCard';
 import { formatCatalogCategory, isRealtimeStale, watchCatalog } from '../services/catalogService';
 
 function Catalog() {
@@ -133,7 +133,7 @@ function Catalog() {
 
       {charms && visibleCharms.length > 0 ? (
         <div className="catalog-grid">
-          {visibleCharms.map((charm) => <CatalogCard key={charm.id} charm={charm} />)}
+          {visibleCharms.map((charm) => <CharmCard key={charm.id} charm={charm} />)}
         </div>
       ) : null}
 

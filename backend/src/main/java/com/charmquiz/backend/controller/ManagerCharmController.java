@@ -10,7 +10,9 @@ import com.charmquiz.backend.service.SupabaseManagerCharmService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -79,12 +81,21 @@ public class ManagerCharmController {
         return charmService.updateStockStatus(id, request.stockStatus());
     }
 
+    @DeleteMapping("/charms/{id}")
+    public ResponseEntity<Void> deleteCharm(@PathVariable UUID id) {
+        charmService.deleteCharm(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping(
             value = "/charm-images",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public ResponseEntity<CharmImageUploadResponse> uploadImage(
-            @RequestPart("file") MultipartFile file) {
-        return ResponseEntity.status(201).body(storageService.upload(file));
+            @RequestPart("file") MultipartFile file,
+            JwtAuthenticationToken authentication) {
+        return ResponseEntity.status(201).body(
+                storageService.upload(file, authentication.getToken().getTokenValue())
+        );
     }
 }

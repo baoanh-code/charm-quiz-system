@@ -256,6 +256,27 @@ class SupabaseManagerRecommendationRuleServiceTest {
     }
 
     @Test
+    void deleteUsesExactUuidAndManagedFieldBoundary() {
+        server.expect(request -> {
+                    assertThat(request.getMethod().name()).isEqualTo("DELETE");
+                    assertManagedIdFilter(request.getURI().getQuery());
+                    assertThat(request.getHeaders().getFirst("Prefer"))
+                            .isEqualTo("return=representation");
+                })
+                .andRespond(withSuccess("[" + managedRow() + "]", MediaType.APPLICATION_JSON));
+
+        service.deleteRule(RULE_ID);
+        server.verify();
+
+        server.reset();
+        server.expect(request -> assertManagedIdFilter(request.getURI().getQuery()))
+                .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+        assertThatThrownBy(() -> service.deleteRule(RULE_ID))
+                .isInstanceOf(ManagerRecommendationRuleNotFoundException.class);
+        server.verify();
+    }
+
+    @Test
     void malformedAndUpstreamFailuresAreMappedWithoutSensitiveDetails() {
         server.expect(request -> {
                 }).andRespond(withSuccess("not-json", MediaType.APPLICATION_JSON));

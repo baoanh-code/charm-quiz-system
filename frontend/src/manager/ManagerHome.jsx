@@ -1,7 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Pencil, Plus, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
-import { filterManagerCharms, loadPreviewManagerCharms, savePreviewManagerCharm } from '../services/managerCharmService';
+import {
+  deleteManagerCharmAndReload,
+  filterManagerCharms,
+  loadManagerCharms,
+  saveManagerCharm,
+  updateManagerCharmStatus,
+  updateManagerCharmStockStatus,
+} from '../services/managerCharmService';
 import CharmEditor from './CharmEditor';
 
 const PAGE_SIZE = 12;
@@ -31,12 +38,13 @@ function ManagerHome() {
   const [page, setPage] = useState(1);
   const [editor, setEditor] = useState(null);
   const [notice, setNotice] = useState('');
-  const nextId = useRef(0);
+  const [pendingId, setPendingId] = useState(null);
+  const [actionError, setActionError] = useState('');
 
   useEffect(() => {
     let active = true;
 
-    loadPreviewManagerCharms().then((rows) => {
+    loadManagerCharms().then((rows) => {
       if (!active) return;
       setCharms(rows);
       setLoadError('');
@@ -48,7 +56,7 @@ function ManagerHome() {
   }, [retryKey]);
 
   const categories = useMemo(() =>
-    [...new Set((charms ?? []).map((charm) => charm.category))].sort(),
+    [...new Set((charms ?? []).map((charm) => charm.category).filter(Boolean))].sort(),
   [charms]);
   const filteredCharms = useMemo(() =>
     filterManagerCharms(charms ?? [], filters),
@@ -64,16 +72,70 @@ function ManagerHome() {
     setPage(1);
   }
 
-  function handleSave(draft) {
+  function replaceCharm(updated) {
+    setCharms((current) => current.map((charm) => charm.id === updated.id ? updated : charm));
+  }
+
+  async function handleSave(draft) {
+    const saved = await saveManagerCharm({
+      id: editor.mode === 'edit' ? editor.charm.id : null,
+      draft,
+    });
     if (editor.mode === 'create') {
-      nextId.current += 1;
-      setCharms(savePreviewManagerCharm({ ...draft, id: `preview-new-${nextId.current}` }));
+      setCharms((current) => [saved, ...current.filter((charm) => charm.id !== saved.id)]);
       setFilters(initialFilters);
       setPage(1);
-      setNotice(`${draft.name} added to the preview list.`);
+      setNotice(`${saved.name} was created.`);
     } else {
-      setCharms(savePreviewManagerCharm({ ...editor.charm, ...draft }));
-      setNotice(`${draft.name} updated in the preview list.`);
+      replaceCharm(saved);
+      setNotice(`${saved.name} was updated.`);
+    }
+    setActionError('');
+  }
+
+  async function handleStatusToggle(charm) {
+    if (pendingId) return;
+    setPendingId(charm.id);
+    setActionError('');
+    try {
+      const status = charm.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      replaceCharm(await updateManagerCharmStatus(charm.id, status));
+      setNotice(`${charm.name} is now ${status.toLowerCase()}.`);
+    } catch {
+      setActionError('Could not change charm status. Try again.');
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function handleStockToggle(charm) {
+    if (pendingId) return;
+    setPendingId(charm.id);
+    setActionError('');
+    try {
+      const stockStatus = charm.stockStatus === 'IN_STOCK' ? 'OUT_OF_STOCK' : 'IN_STOCK';
+      replaceCharm(await updateManagerCharmStockStatus(charm.id, stockStatus));
+      setNotice(`${charm.name} stock was updated.`);
+    } catch {
+      setActionError('Could not change stock status. Try again.');
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function handleDelete(charm) {
+    if (pendingId || !window.confirm(`Delete ${charm.name}? This cannot be undone.`)) return;
+    setPendingId(charm.id);
+    setActionError('');
+    try {
+      setCharms(await deleteManagerCharmAndReload(charm.id));
+      setNotice(`${charm.name} was deleted.`);
+    } catch (error) {
+      setActionError(error?.status === 409
+        ? 'This charm is used by a recommendation rule and cannot be deleted.'
+        : 'Could not delete the charm. Try again.');
+    } finally {
+      setPendingId(null);
     }
   }
 
@@ -90,8 +152,8 @@ function ManagerHome() {
         </button>
       </header>
 
-      <p className="manager-preview-note">Preview workspace. Changes here last until the page is refreshed.</p>
       {notice ? <p className="manager-save-notice" role="status">{notice}</p> : null}
+      {actionError ? <p className="manager-form-error" role="alert">{actionError}</p> : null}
 
       <dl className="manager-summary">
         <div><dt>Total charms</dt><dd>{charms?.length ?? '...'}</dd></div>
@@ -177,11 +239,14 @@ function ManagerHome() {
                     </div>
                   </td>
                   <td>{charm.category}</td>
-                  <td><span className={`manager-state manager-state--${charm.status.toLowerCase()}`}>{charm.status}</span></td>
-                  <td><span className={`manager-state manager-state--${charm.stockStatus.toLowerCase()}`}>{charm.stockStatus.replaceAll('_', ' ')}</span></td>
+                  <td><button className="manager-state-button" type="button" disabled={pendingId !== null} onClick={() => handleStatusToggle(charm)}><span className={`manager-state manager-state--${charm.status.toLowerCase()}`}>{charm.status}</span></button></td>
+                  <td><button className="manager-state-button" type="button" disabled={pendingId !== null} onClick={() => handleStockToggle(charm)}><span className={`manager-state manager-state--${charm.stockStatus.toLowerCase()}`}>{charm.stockStatus.replaceAll('_', ' ')}</span></button></td>
                   <td>
-                    <button className="manager-icon-button" type="button" title={`Edit ${charm.name}`} aria-label={`Edit ${charm.name}`} onClick={() => setEditor({ mode: 'edit', charm })}>
+                    <button className="manager-icon-button" type="button" title={`Edit ${charm.name}`} aria-label={`Edit ${charm.name}`} disabled={pendingId !== null} onClick={() => setEditor({ mode: 'edit', charm })}>
                       <Pencil size={18} aria-hidden="true" />
+                    </button>
+                    <button className="manager-icon-button" type="button" title={`Delete ${charm.name}`} aria-label={`Delete ${charm.name}`} disabled={pendingId !== null} onClick={() => handleDelete(charm)}>
+                      <Trash2 size={18} aria-hidden="true" />
                     </button>
                   </td>
                 </tr>

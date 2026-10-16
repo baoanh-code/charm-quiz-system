@@ -5,5 +5,6 @@ public enum RecommendationSectionType {
     BIRTH_DATE,
     INTERESTS,
     FAVORITE_ANIMAL,
-    FAVORITE_COLOR
+    FAVORITE_COLOR,
+    GENERAL
 }

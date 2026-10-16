@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -119,6 +120,14 @@ class ManagerRecommendationRuleControllerTest {
                 .andExpect(jsonPath("$.status").value("INACTIVE"));
 
         verify(ruleService).updateStatus(RULE_ID, RecommendationRuleStatus.INACTIVE);
+    }
+
+    @Test
+    void deletesRule() throws Exception {
+        mockMvc.perform(delete("/api/manager/recommendation-rules/{id}", RULE_ID))
+                .andExpect(status().isNoContent());
+
+        verify(ruleService).deleteRule(RULE_ID);
     }
 
     @Test

@@ -7,7 +7,10 @@ import com.charmquiz.backend.exception.ManagerUpstreamException;
 import com.charmquiz.backend.exception.ManagerValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -23,6 +26,9 @@ import java.util.UUID;
 public class SupabaseCharmStorageService {
 
     static final long MAX_IMAGE_SIZE = 5L * 1024 * 1024;
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+            SupabaseCharmStorageService.class
+    );
     private static final Map<String, ImageType> IMAGE_TYPES = Map.of(
             MediaType.IMAGE_JPEG_VALUE, new ImageType("jpg", SupabaseCharmStorageService::isJpeg),
             MediaType.IMAGE_PNG_VALUE, new ImageType("png", SupabaseCharmStorageService::isPng),
@@ -36,12 +42,12 @@ public class SupabaseCharmStorageService {
     @Autowired
     public SupabaseCharmStorageService(
             @Value("${supabase.url}") String supabaseUrl,
-            @Value("${supabase.secret-key}") String secretKey,
+            @Value("${supabase.publishable-key}") String publishableKey,
             @Value("${supabase.storage.charm-images-bucket}") String bucket) {
         this(
                 RestClient.builder()
-                        .baseUrl(supabaseUrl + "/storage/v1")
-                        .defaultHeader("apikey", secretKey)
+                        .baseUrl(supabaseUrl)
+                        .defaultHeader("apikey", publishableKey)
                         .build(),
                 supabaseUrl + "/storage/v1/object/public",
                 bucket
@@ -57,7 +63,7 @@ public class SupabaseCharmStorageService {
         this.bucket = bucket;
     }
 
-    public CharmImageUploadResponse upload(MultipartFile file) {
+    public CharmImageUploadResponse upload(MultipartFile file, String managerAccessToken) {
         if (file == null || file.isEmpty()) {
             throw new ManagerValidationException("An image file is required.");
         }
@@ -81,26 +87,49 @@ public class SupabaseCharmStorageService {
         }
 
         String objectPath = "manager/" + UUID.randomUUID() + "." + imageType.extension();
+        String endpoint = "/storage/v1/object/" + bucket + "/" + objectPath;
         try {
             restClient.post()
-                    .uri("/object/" + bucket + "/" + objectPath)
+                    .uri(endpoint)
                     .contentType(MediaType.parseMediaType(file.getContentType()))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + managerAccessToken)
                     .header("x-upsert", "false")
                     .body(content)
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientResponseException exception) {
+            String diagnostic = storageDiagnostic(exception, endpoint);
+            LOGGER.warn(diagnostic);
             if (exception.getStatusCode().value() == 409) {
                 throw new ManagerConflictException("Image object already exists.", exception);
             }
-            throw new ManagerUpstreamException("Supabase Storage upload failed.", exception);
+            throw new ManagerUpstreamException(diagnostic, exception);
         } catch (RestClientException exception) {
-            throw new ManagerUpstreamException("Supabase Storage upload failed.", exception);
+            String diagnostic = "Supabase Storage upload failed: endpoint=" + endpoint
+                    + ", auth=publishable-apikey+manager-jwt, transport="
+                    + exception.getClass().getSimpleName();
+            LOGGER.warn(diagnostic);
+            throw new ManagerUpstreamException(diagnostic, exception);
         }
 
         return new CharmImageUploadResponse(
                 publicStorageBaseUrl + "/" + bucket + "/" + objectPath
         );
+    }
+
+    private String storageDiagnostic(
+            RestClientResponseException exception,
+            String endpoint) {
+        String response = exception.getResponseBodyAsString()
+                .replaceAll("[\\r\\n]+", " ")
+                .trim();
+        if (response.length() > 1000) {
+            response = response.substring(0, 1000) + "...";
+        }
+        return "Supabase Storage upload failed: status="
+                + exception.getStatusCode().value()
+                + ", endpoint=" + endpoint
+                + ", auth=publishable-apikey+manager-jwt, response=" + response;
     }
 
     private static boolean isJpeg(byte[] content) {

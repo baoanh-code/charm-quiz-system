@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import { RULE_FIELDS, validateManagerRule } from '../services/managerRuleService';
+import { RULE_FIELDS, RULE_OPERATORS, validateManagerRule } from '../services/managerRuleService';
 
 function makeDraft(rule) {
   return {
     charmId: rule?.charmId ?? '',
     field: rule?.field ?? 'NAME_INITIAL',
-    operator: rule?.operator ?? '',
+    operator: rule?.operator ?? 'EQUALS',
     value: rule?.value ?? '',
     priority: rule?.priority?.toString() ?? '0',
     status: rule?.status ?? 'ACTIVE',
@@ -54,7 +54,7 @@ function RuleEditor({ rule, charms, onSave, onClose }) {
       });
       onClose();
     } catch {
-      setSaveError('Could not save the rule preview. Try again.');
+      setSaveError('Could not save the rule. Try again.');
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -91,8 +91,10 @@ function RuleEditor({ rule, charms, onSave, onClose }) {
         </div>
         <div className="manager-field">
           <label htmlFor="rule-operator">Operator</label>
-          <input id="rule-operator" value={draft.operator} onChange={(event) => update('operator', event.target.value)} aria-invalid={!!errors.operator} aria-describedby={errors.operator ? 'rule-operator-error' : 'rule-operator-hint'} disabled={saving} />
-          {errors.operator ? <span id="rule-operator-error" className="manager-form-error">{errors.operator}</span> : <span id="rule-operator-hint" className="manager-field__hint">Operator values await the backend contract.</span>}
+          <select id="rule-operator" value={draft.operator} onChange={(event) => update('operator', event.target.value)} aria-invalid={!!errors.operator} aria-describedby={errors.operator ? 'rule-operator-error' : undefined} disabled={saving}>
+            {RULE_OPERATORS.map((operator) => <option key={operator} value={operator}>{operator}</option>)}
+          </select>
+          {errors.operator ? <span id="rule-operator-error" className="manager-form-error">{errors.operator}</span> : null}
         </div>
         <div className="manager-field manager-field--wide">
           <label htmlFor="rule-value">Value</label>
@@ -115,7 +117,7 @@ function RuleEditor({ rule, charms, onSave, onClose }) {
         {saveError ? <p className="manager-form-error manager-field--wide" role="alert">{saveError}</p> : null}
         <div className="manager-editor__footer manager-field--wide">
           <button className="button button--secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="button button--primary" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save preview'}</button>
+          <button className="button button--primary" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save rule'}</button>
         </div>
       </form>
     </dialog>

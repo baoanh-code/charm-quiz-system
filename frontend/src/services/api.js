@@ -5,16 +5,22 @@ const API_BASE_URL =
   import.meta.env?.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 export class ApiError extends Error {
-  constructor(status, statusText) {
-    super(`API request failed: ${status}${statusText ? ` ${statusText}` : ''}`);
+  constructor(status, statusText, code, serverMessage) {
+    super(serverMessage || `API request failed: ${status}${statusText ? ` ${statusText}` : ''}`);
     this.name = 'ApiError';
     this.status = status;
+    this.code = code;
+    this.serverMessage = serverMessage;
   }
 }
 
 export async function request(endpoint, options = {}) {
   const headers = { ...options.headers };
-  if (options.body != null && !Object.keys(headers).some((key) => key.toLowerCase() === 'content-type')) {
+  if (
+    options.body != null &&
+    !(options.body instanceof FormData) &&
+    !Object.keys(headers).some((key) => key.toLowerCase() === 'content-type')
+  ) {
     headers['Content-Type'] = 'application/json';
   }
 
@@ -24,7 +30,21 @@ export async function request(endpoint, options = {}) {
   });
 
   if (!response.ok) {
-    throw new ApiError(response.status, response.statusText);
+    const contentType = response.headers.get('content-type') || '';
+    let errorBody = null;
+    if (contentType.includes('application/json')) {
+      try {
+        errorBody = await response.json();
+      } catch {
+        errorBody = null;
+      }
+    }
+    throw new ApiError(
+      response.status,
+      response.statusText,
+      errorBody?.code,
+      errorBody?.message,
+    );
   }
 
   if (response.status === 204) return null;

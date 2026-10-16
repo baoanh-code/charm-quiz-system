@@ -9,7 +9,7 @@ function displayInput(key, input) {
 }
 
 function RecommendationGroup({ definition, group }) {
-  const { key, title, number, symbol } = definition;
+  const { key, title, subtitle, number, symbol } = definition;
   const { recommendations, input, fallback } = group;
 
   return (
@@ -19,7 +19,9 @@ function RecommendationGroup({ definition, group }) {
           <span className="result-group__number" aria-hidden="true">{number}</span>
           <div>
             <h2 id={`result-${key}`}>{title}</h2>
-            {input ? <p className="result-group__input">{displayInput(key, input)}</p> : null}
+            {input || subtitle ? (
+              <p className="result-group__input">{input ? displayInput(key, input) : subtitle}</p>
+            ) : null}
           </div>
         </div>
         <span className="result-group__count">
@@ -38,6 +40,7 @@ function RecommendationGroup({ definition, group }) {
                 symbol={symbol}
                 fallback={fallback}
                 position={index + 1}
+                categoryLabel={title}
               />
             ))}
           </div>

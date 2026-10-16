@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { ImagePlus, Trash2, X } from 'lucide-react';
+import {
+  clearManagerCharmImage,
+  managerCharmErrorMessage,
+  selectManagerCharmImage,
+} from '../services/managerCharmService';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -20,11 +25,14 @@ function makeDraft(charm) {
 function CharmEditor({ charm, categories, onSave, onClose }) {
   const dialogRef = useRef(null);
   const readerRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [draft, setDraft] = useState(() => makeDraft(charm));
   const [imageState, setImageState] = useState('idle');
   const [imageError, setImageError] = useState('');
   const [failedImage, setFailedImage] = useState('');
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -60,30 +68,28 @@ function CharmEditor({ charm, categories, onSave, onClose }) {
 
     reader.onload = () => {
       if (readerRef.current !== reader) return;
-      setDraft((current) => ({
-        ...current,
-        imageUrl: String(reader.result),
-        imageFile: file,
-      }));
+      setDraft((current) => selectManagerCharmImage(current, file, String(reader.result)));
+      readerRef.current = null;
       setImageState('ready');
     };
     reader.onerror = () => {
       if (readerRef.current !== reader) return;
+      readerRef.current = null;
       setImageState('idle');
       setImageError('The image could not be opened. Try another file.');
     };
     reader.readAsDataURL(file);
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    if (imageState === 'uploading') return;
+    if (imageState === 'uploading' || savingRef.current) return;
 
     const name = draft.name.trim();
     const description = draft.description.trim();
     const category = draft.category.trim();
-    if (!name || !description || !category) {
-      setFormError('Name, description, and category are required.');
+    if (!name || !draft.imageUrl) {
+      setFormError('Name and image are required.');
       return;
     }
     if (draft.imageUrl && draft.imageUrl === failedImage) {
@@ -93,21 +99,27 @@ function CharmEditor({ charm, categories, onSave, onClose }) {
     if (draft.imageUrl && !draft.imageFile) {
       try {
         const imageUrl = new URL(draft.imageUrl);
-        if (!['http:', 'https:'].includes(imageUrl.protocol)) throw new Error('Invalid image URL');
+        if (imageUrl.protocol !== 'https:') throw new Error('Invalid image URL');
       } catch {
-        setFormError('Enter an HTTP or HTTPS image URL.');
+        setFormError('Enter a valid HTTPS image URL.');
         return;
       }
     }
 
-    onSave({
-      ...draft,
-      name,
-      description,
-      category,
-      tags: [...new Set(draft.tags.split(',').map((tag) => tag.trim()).filter(Boolean))],
-    });
-    onClose();
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await onSave({
+        ...draft, name, description: description || null, category: category || null,
+        tags: [...new Set(draft.tags.split(',').map((tag) => tag.trim()).filter(Boolean))],
+      });
+      onClose();
+    } catch (error) {
+      setFormError(managerCharmErrorMessage(error));
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   }
 
   const showImage = draft.imageUrl && draft.imageUrl !== failedImage;
@@ -115,14 +127,14 @@ function CharmEditor({ charm, categories, onSave, onClose }) {
   return (
     <dialog ref={dialogRef} className="manager-editor" onCancel={(event) => {
       event.preventDefault();
-      onClose();
+      if (!savingRef.current) onClose();
     }} aria-labelledby="manager-editor-title">
       <div className="manager-editor__header">
         <div>
           <p className="manager-eyebrow">Charm inventory</p>
           <h2 id="manager-editor-title">{charm ? 'Edit charm' : 'Add charm'}</h2>
         </div>
-        <button className="manager-icon-button" type="button" title="Close" aria-label="Close" onClick={onClose}>
+        <button className="manager-icon-button" type="button" title="Close" aria-label="Close" onClick={onClose} disabled={saving}>
           <X size={20} aria-hidden="true" />
         </button>
       </div>
@@ -134,14 +146,14 @@ function CharmEditor({ charm, categories, onSave, onClose }) {
         </div>
         <div className="manager-field">
           <label htmlFor="charm-category">Category</label>
-          <input id="charm-category" list="manager-categories" value={draft.category} onChange={(event) => updateDraft('category', event.target.value)} required />
+          <input id="charm-category" list="manager-categories" value={draft.category} onChange={(event) => updateDraft('category', event.target.value)} />
           <datalist id="manager-categories">
             {categories.map((category) => <option key={category} value={category} />)}
           </datalist>
         </div>
         <div className="manager-field manager-field--wide">
           <label htmlFor="charm-description">Description</label>
-          <textarea id="charm-description" rows="3" value={draft.description} onChange={(event) => updateDraft('description', event.target.value)} required />
+          <textarea id="charm-description" rows="3" value={draft.description} onChange={(event) => updateDraft('description', event.target.value)} />
         </div>
         <div className="manager-field manager-field--wide">
           <label htmlFor="charm-tags">Tags</label>
@@ -175,13 +187,14 @@ function CharmEditor({ charm, categories, onSave, onClose }) {
                 <label className="button button--secondary manager-file-button">
                   <ImagePlus size={16} aria-hidden="true" />
                   Select image
-                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageFile} />
+                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageFile} />
                 </label>
                 {draft.imageUrl ? (
                   <button className="manager-icon-button" type="button" title="Remove image" aria-label="Remove image" onClick={() => {
                     readerRef.current?.abort();
                     readerRef.current = null;
-                    setDraft((current) => ({ ...current, imageUrl: '', imageFile: null }));
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                    setDraft(clearManagerCharmImage);
                     setImageState('idle');
                     setImageError('');
                     setFailedImage('');
@@ -209,8 +222,8 @@ function CharmEditor({ charm, categories, onSave, onClose }) {
 
         {formError ? <p className="manager-form-error manager-field--wide" role="alert">{formError}</p> : null}
         <div className="manager-editor__footer manager-field--wide">
-          <button className="button button--secondary" type="button" onClick={onClose}>Cancel</button>
-          <button className="button button--primary" type="submit" disabled={imageState === 'uploading'}>Save preview</button>
+          <button className="button button--secondary" type="button" onClick={onClose} disabled={saving}>Cancel</button>
+          <button className="button button--primary" type="submit" disabled={imageState === 'uploading' || saving}>{saving ? 'Saving...' : 'Save charm'}</button>
         </div>
       </form>
     </dialog>

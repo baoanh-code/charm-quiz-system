@@ -29,7 +29,8 @@ public class RecommendationService {
             RecommendationSectionType.BIRTH_DATE,
             RecommendationSectionType.INTERESTS,
             RecommendationSectionType.FAVORITE_ANIMAL,
-            RecommendationSectionType.FAVORITE_COLOR
+            RecommendationSectionType.FAVORITE_COLOR,
+            RecommendationSectionType.GENERAL
     );
     private static final Set<RecommendationSectionType> AI_ELIGIBLE_SECTIONS = Set.of(
             RecommendationSectionType.INTERESTS,
@@ -42,18 +43,21 @@ public class RecommendationService {
     private final ProfileDerivationService profileDerivationService;
     private final GeminiRecommendationClient geminiClient;
     private final LocalFallbackService localFallbackService;
+    private final RandomSuggestionService randomSuggestionService;
 
     public RecommendationService(
             SupabaseCharmService charmService,
             SupabaseRecommendationRuleService ruleService,
             ProfileDerivationService profileDerivationService,
             GeminiRecommendationClient geminiClient,
-            LocalFallbackService localFallbackService) {
+            LocalFallbackService localFallbackService,
+            RandomSuggestionService randomSuggestionService) {
         this.charmService = charmService;
         this.ruleService = ruleService;
         this.profileDerivationService = profileDerivationService;
         this.geminiClient = geminiClient;
         this.localFallbackService = localFallbackService;
+        this.randomSuggestionService = randomSuggestionService;
     }
 
     public RecommendationResponse getRecommendations(RecommendationRequest request) {
@@ -87,12 +91,20 @@ public class RecommendationService {
             resolveAiEligibleSections(results, unresolvedAiInputs, eligibleCatalog, catalogById);
         }
 
+        addRandomSuggestions(results, eligibleCatalog);
+
         return new RecommendationResponse(SECTION_ORDER.stream()
                 .map(section -> new RecommendationResponse.Section(
                         section,
                         responseInput(section, request, profile),
                         derivedValues(section, profile),
-                        validateFinalItems(results.getOrDefault(section, List.of()), catalogById)
+                        validateFinalItems(
+                                results.getOrDefault(section, List.of()),
+                                catalogById,
+                                section == RecommendationSectionType.GENERAL
+                                        ? RandomSuggestionService.MAX_SUGGESTIONS
+                                        : MAX_RESULTS_PER_SECTION
+                        )
                 ))
                 .toList());
     }
@@ -209,7 +221,8 @@ public class RecommendationService {
 
     private List<RecommendationResponse.Item> validateFinalItems(
             List<RecommendationResponse.Item> items,
-            Map<String, EligibleCharm> catalogById) {
+            Map<String, EligibleCharm> catalogById,
+            int maximumResults) {
         Set<String> seenIds = new HashSet<>();
         List<RecommendationResponse.Item> validatedItems = new ArrayList<>();
 
@@ -227,12 +240,32 @@ public class RecommendationService {
                     item.reason()
             ));
 
-            if (validatedItems.size() == MAX_RESULTS_PER_SECTION) {
+            if (validatedItems.size() == maximumResults) {
                 break;
             }
         }
 
         return List.copyOf(validatedItems);
+    }
+
+    private void addRandomSuggestions(
+            Map<RecommendationSectionType, List<RecommendationResponse.Item>> results,
+            List<EligibleCharm> catalog) {
+        Set<String> alreadyRecommended = results.values().stream()
+                .flatMap(List::stream)
+                .map(RecommendationResponse.Item::charmId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        List<RecommendationResponse.Item> randomItems = new ArrayList<>();
+        for (EligibleCharm charm : randomSuggestionService.select(catalog, alreadyRecommended)) {
+            randomItems.add(toItem(
+                    charm,
+                    RecommendationSource.RANDOM,
+                    randomItems.size() + 1,
+                    "Random suggestion from the eligible charm catalog"
+            ));
+        }
+        results.put(RecommendationSectionType.GENERAL, List.copyOf(randomItems));
     }
 
     private Map<String, EligibleCharm> eligibleCatalogById(List<EligibleCharm> catalog) {
@@ -265,6 +298,7 @@ public class RecommendationService {
             case INTERESTS -> profile.interests();
             case FAVORITE_ANIMAL -> List.of(profile.favoriteAnimal());
             case FAVORITE_COLOR -> List.of(profile.favoriteColor());
+            case GENERAL -> List.of();
         };
     }
 

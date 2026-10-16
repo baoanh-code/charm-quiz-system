@@ -179,6 +179,30 @@ class SupabaseManagerCharmServiceTest {
     }
 
     @Test
+    void deleteUsesExactUuidAndReturnsNotFoundForMissingCharm() {
+        server.expect(request -> {
+                    assertThat(request.getMethod().name()).isEqualTo("DELETE");
+                    assertThat(request.getURI().getQuery())
+                            .isEqualTo("id=eq." + CHARM_ID
+                                    + "&select=" + SupabaseManagerCharmService.SELECT_COLUMNS
+                                    + "&limit=1");
+                    assertThat(request.getHeaders().getFirst("Prefer"))
+                            .isEqualTo("return=representation");
+                })
+                .andRespond(withSuccess(rowJson(CharmStatus.ACTIVE, CharmStockStatus.IN_STOCK),
+                        MediaType.APPLICATION_JSON));
+        service.deleteCharm(CHARM_ID);
+        server.verify();
+
+        server.reset();
+        server.expect(request -> {
+                }).andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+        assertThatThrownBy(() -> service.deleteCharm(CHARM_ID))
+                .isInstanceOf(ManagerCharmNotFoundException.class);
+        server.verify();
+    }
+
+    @Test
     void emptyExactLookupAndUpdateAreNotFound() {
         server.expect(request -> {
                 }).andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));

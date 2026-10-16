@@ -12,12 +12,13 @@ const sectionTypes = [
   'INTERESTS',
   'FAVORITE_ANIMAL',
   'FAVORITE_COLOR',
+  'GENERAL',
 ];
 
 function section(type, recommendations = []) {
   return {
     type,
-    input: type === 'INTERESTS' ? ['music', 'football'] : [type.toLowerCase()],
+    input: type === 'GENERAL' ? [] : type === 'INTERESTS' ? ['music', 'football'] : [type.toLowerCase()],
     derivedValues: {},
     recommendations,
   };
@@ -65,13 +66,37 @@ test('normalizes sections by type into fixed display order regardless of backend
   assert.equal(result.profile, profile);
 });
 
-test('accepts five valid empty recommendation sections', () => {
+test('accepts six valid empty recommendation sections', () => {
   const result = normalizeGroupedRecommendation(completeResponse(), {});
 
-  assert.equal(result.groups.length, 5);
+  assert.equal(result.groups.length, 6);
   assert.equal(result.hasResults, false);
   assert.equal(result.isPartial, true);
   assert.ok(result.groups.every((group) => group.recommendations.length === 0));
+});
+
+test('accepts up to eight sequential random suggestions in the general section', () => {
+  const response = completeResponse();
+  response.sections.find((value) => value.type === 'GENERAL').recommendations = Array.from(
+    { length: 8 },
+    (_, index) => item('RANDOM', index + 1),
+  );
+
+  const result = normalizeGroupedRecommendation(response, {});
+
+  assert.equal(result.groups[5].type, 'GENERAL');
+  assert.equal(result.groups[5].recommendations.length, 8);
+  assert.ok(result.groups[5].recommendations.every((value) => value.source === 'RANDOM'));
+});
+
+test('rejects more than eight suggestions in the general section', () => {
+  const response = completeResponse();
+  response.sections.find((value) => value.type === 'GENERAL').recommendations = Array.from(
+    { length: 9 },
+    (_, index) => item('RANDOM', index + 1),
+  );
+
+  assert.throws(() => normalizeGroupedRecommendation(response, {}), /Too many/);
 });
 
 test('submits the approved profile payload and maps the backend response', async () => {

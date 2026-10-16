@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pencil, Plus, Search } from 'lucide-react';
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useOutletContext } from 'react-router-dom';
-import { loadPreviewManagerCharms } from '../services/managerCharmService';
-import { filterManagerRules, loadPreviewManagerRules, RULE_FIELDS, savePreviewManagerRule } from '../services/managerRuleService';
+import { loadManagerCharms } from '../services/managerCharmService';
+import {
+  createManagerRule,
+  deleteManagerRule,
+  filterManagerRules,
+  loadManagerRules,
+  RULE_FIELDS,
+  updateManagerRule,
+  updateManagerRuleStatus,
+} from '../services/managerRuleService';
 import RuleEditor from './RuleEditor';
 
 const initialFilters = { search: '', field: 'all', status: 'all' };
@@ -21,7 +29,7 @@ function ManagerRules() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([loadPreviewManagerRules(), loadPreviewManagerCharms()]).then(([loadedRules, loadedCharms]) => {
+    Promise.all([loadManagerRules(), loadManagerCharms()]).then(([loadedRules, loadedCharms]) => {
       if (!active) return;
       setRules(loadedRules);
       setCharms(loadedCharms);
@@ -41,13 +49,15 @@ function ManagerRules() {
   }
 
   async function handleSave(draft) {
-    const nextRule = editor.rule
-      ? { ...editor.rule, ...draft }
-      : { ...draft, id: `preview-rule-${crypto.randomUUID()}` };
-    setRules(await savePreviewManagerRule(nextRule));
+    const saved = editor.rule
+      ? await updateManagerRule(editor.rule.id, draft)
+      : await createManagerRule(draft);
+    setRules((current) => editor.rule
+      ? current.map((rule) => rule.id === saved.id ? saved : rule)
+      : [...current, saved]);
     if (!editor.rule) setFilters(initialFilters);
     setActionError('');
-    setNotice(`${charmNames.get(draft.charmId)} rule ${editor.rule ? 'updated' : 'added'} in the preview list.`);
+    setNotice(`${charmNames.get(draft.charmId)} rule was ${editor.rule ? 'updated' : 'created'}.`);
   }
 
   async function handleToggle(rule) {
@@ -57,10 +67,27 @@ function ManagerRules() {
     setNotice('');
     try {
       const status = rule.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      setRules(await savePreviewManagerRule({ ...rule, status }));
-      setNotice(`Rule ${status === 'ACTIVE' ? 'enabled' : 'disabled'} in the preview list.`);
+      const updated = await updateManagerRuleStatus(rule.id, status);
+      setRules((current) => current.map((item) => item.id === updated.id ? updated : item));
+      setNotice(`Rule ${status === 'ACTIVE' ? 'enabled' : 'disabled'}.`);
     } catch {
       setActionError('Could not change the rule status. Try again.');
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function handleDelete(rule) {
+    if (pendingId || !window.confirm('Delete this recommendation rule? This cannot be undone.')) return;
+    setPendingId(rule.id);
+    setActionError('');
+    setNotice('');
+    try {
+      await deleteManagerRule(rule.id);
+      setRules((current) => current.filter((item) => item.id !== rule.id));
+      setNotice('Rule was deleted.');
+    } catch {
+      setActionError('Could not delete the rule. Try again.');
     } finally {
       setPendingId(null);
     }
@@ -79,7 +106,6 @@ function ManagerRules() {
         </button>
       </header>
 
-      <p className="manager-preview-note">Preview workspace. Changes here last until the page is refreshed. The backend remains the source of truth for matching.</p>
       {notice ? <p className="manager-save-notice" role="status">{notice}</p> : null}
       {actionError ? <p className="manager-form-error" role="alert">{actionError}</p> : null}
 
@@ -143,6 +169,7 @@ function ManagerRules() {
                       <input type="checkbox" checked={rule.status === 'ACTIVE'} disabled={pendingId !== null} onChange={() => handleToggle(rule)} aria-label={`${rule.status === 'ACTIVE' ? 'Disable' : 'Enable'} rule for ${charmNames.get(rule.charmId) ?? 'charm'}`} />
                     </label>
                     <button className="manager-icon-button" type="button" title={`Edit rule for ${charmNames.get(rule.charmId) ?? 'charm'}`} aria-label={`Edit rule for ${charmNames.get(rule.charmId) ?? 'charm'}`} onClick={() => setEditor({ mode: 'edit', rule })} disabled={pendingId !== null}><Pencil size={18} aria-hidden="true" /></button>
+                    <button className="manager-icon-button" type="button" title="Delete rule" aria-label={`Delete rule for ${charmNames.get(rule.charmId) ?? 'charm'}`} onClick={() => handleDelete(rule)} disabled={pendingId !== null}><Trash2 size={18} aria-hidden="true" /></button>
                   </div></td>
                 </tr>
               ))}

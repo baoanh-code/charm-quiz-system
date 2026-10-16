@@ -7,6 +7,7 @@ import com.charmquiz.backend.service.SupabaseManagerRecommendationRuleService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,5 +62,11 @@ public class ManagerRecommendationRuleController {
             @PathVariable UUID id,
             @Valid @RequestBody RecommendationRuleStatusUpdateRequest request) {
         return ruleService.updateStatus(id, request.status());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRule(@PathVariable UUID id) {
+        ruleService.deleteRule(id);
+        return ResponseEntity.noContent().build();
     }
 }

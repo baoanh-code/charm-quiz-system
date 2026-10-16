@@ -95,6 +95,15 @@ public class SupabaseManagerCharmService {
         return patchCharm(id, Map.of("stock_status", stockStatus.name()));
     }
 
+    public void deleteCharm(UUID id) {
+        String rawJson = execute(() -> restClient.delete()
+                .uri(charmByIdUri(id))
+                .header("Prefer", "return=representation")
+                .retrieve()
+                .body(String.class));
+        exactlyOne(rawJson, true);
+    }
+
     private ManagerCharmResponse patchCharm(UUID id, Map<String, Object> body) {
         String rawJson = execute(() -> restClient.patch()
                 .uri(charmByIdUri(id))

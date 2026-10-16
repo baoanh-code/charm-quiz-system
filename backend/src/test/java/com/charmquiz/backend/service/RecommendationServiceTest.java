@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,7 +43,8 @@ class RecommendationServiceTest {
                 ruleService,
                 new ProfileDerivationService(),
                 geminiClient,
-                new LocalFallbackService()
+                new LocalFallbackService(),
+                new RandomSuggestionService(new Random(1))
         );
     }
 
@@ -86,7 +88,8 @@ class RecommendationServiceTest {
                         RecommendationSectionType.BIRTH_DATE,
                         RecommendationSectionType.INTERESTS,
                         RecommendationSectionType.FAVORITE_ANIMAL,
-                        RecommendationSectionType.FAVORITE_COLOR
+                        RecommendationSectionType.FAVORITE_COLOR,
+                        RecommendationSectionType.GENERAL
                 );
         RecommendationResponse.Section interests = section(response, RecommendationSectionType.INTERESTS);
         assertThat(interests.recommendations())
@@ -198,7 +201,7 @@ class RecommendationServiceTest {
         assertThat(section(response, RecommendationSectionType.FAVORITE_ANIMAL).recommendations())
                 .extracting(RecommendationResponse.Item::source)
                 .containsOnly(RecommendationSource.LOCAL_FALLBACK);
-        assertThat(response.sections()).hasSize(5);
+        assertThat(response.sections()).hasSize(6);
     }
 
     @Test
@@ -276,14 +279,15 @@ class RecommendationServiceTest {
                 RecommendationSectionType.INTERESTS
         ).recommendations();
 
-        assertThat(response.sections()).hasSize(5);
+        assertThat(response.sections()).hasSize(6);
         assertThat(response.sections()).extracting(RecommendationResponse.Section::type)
                 .containsExactlyElementsOf(List.of(
                         RecommendationSectionType.NAME,
                         RecommendationSectionType.BIRTH_DATE,
                         RecommendationSectionType.INTERESTS,
                         RecommendationSectionType.FAVORITE_ANIMAL,
-                        RecommendationSectionType.FAVORITE_COLOR
+                        RecommendationSectionType.FAVORITE_COLOR,
+                        RecommendationSectionType.GENERAL
                 ));
         assertThat(items).hasSize(3);
         assertThat(items).extracting(RecommendationResponse.Item::charmId)
@@ -292,6 +296,37 @@ class RecommendationServiceTest {
                 .containsExactly(1, 2, 3);
         assertThat(items).extracting(RecommendationResponse.Item::source)
                 .containsOnly(RecommendationSource.RULE);
+    }
+
+    @Test
+    void randomSectionNeedsNoRulesAndExcludesCharmsAlreadyRecommended() {
+        List<EligibleCharm> catalog = List.of(
+                charmWithCategory("matched", "Matched Music", "music", "GENERAL"),
+                charmWithCategory("general-a", "General A", "", "GENERAL"),
+                charmWithCategory("general-b", "General B", "", "GENERAL"),
+                charmWithCategory("other", "Other", "", "ANIMAL"),
+                charmWithCategory("initial", "Initial", "", "INITIAL"),
+                charmWithCategory("zodiac", "Zodiac", "", "ZODIAC")
+        );
+        when(charmService.getEligibleCharms()).thenReturn(catalog);
+        when(ruleService.getMatches(any())).thenReturn(List.of());
+        when(geminiClient.isConfigured()).thenReturn(false);
+
+        RecommendationResponse response = service.getRecommendations(request());
+
+        assertThat(section(response, RecommendationSectionType.INTERESTS).recommendations())
+                .extracting(RecommendationResponse.Item::charmId)
+                .containsExactly("matched");
+        assertThat(section(response, RecommendationSectionType.GENERAL).recommendations())
+                .extracting(RecommendationResponse.Item::charmId)
+                .containsExactlyInAnyOrder("general-a", "general-b")
+                .doesNotContain("matched", "initial", "zodiac");
+        assertThat(section(response, RecommendationSectionType.GENERAL).recommendations())
+                .extracting(RecommendationResponse.Item::source)
+                .containsOnly(RecommendationSource.RANDOM);
+        assertThat(section(response, RecommendationSectionType.GENERAL).recommendations())
+                .extracting(RecommendationResponse.Item::rank)
+                .containsExactly(1, 2);
     }
 
     private RecommendationRequest request() {
@@ -314,12 +349,16 @@ class RecommendationServiceTest {
     }
 
     private EligibleCharm charm(String id, String name, String tag) {
+        return charmWithCategory(id, name, tag, "general");
+    }
+
+    private EligibleCharm charmWithCategory(String id, String name, String tag, String category) {
         return new EligibleCharm(
                 id,
                 name,
                 "",
                 "https://example.com/" + id + ".png",
-                "general",
+                category,
                 tag,
                 "ACTIVE",
                 "IN_STOCK"

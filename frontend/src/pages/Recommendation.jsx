@@ -13,9 +13,6 @@ const initialProfile = {
   favoriteColor: '',
 };
 
-const animalOptions = ['Mèo', 'Chó', 'Thỏ', 'Rồng', 'Bướm'];
-const colorOptions = ['Đỏ', 'Xanh dương', 'Hồng', 'Xanh lá', 'Vàng', 'Tím'];
-
 function validateProfile(profile) {
   const errors = {};
   const payload = buildRecommendationPayload(profile);
@@ -33,11 +30,11 @@ function validateProfile(profile) {
   }
 
   if (!payload.favoriteAnimal) {
-    errors.favoriteAnimal = 'Vui lòng nhập hoặc chọn động vật yêu thích.';
+    errors.favoriteAnimal = 'Vui lòng nhập động vật yêu thích.';
   }
 
   if (!payload.favoriteColor) {
-    errors.favoriteColor = 'Vui lòng nhập hoặc chọn màu sắc yêu thích.';
+    errors.favoriteColor = 'Vui lòng nhập màu sắc yêu thích.';
   }
 
   return errors;
@@ -114,7 +111,7 @@ function Recommendation() {
               type="text"
               value={profile.fullName}
               onChange={updateField}
-              placeholder="Lâm Phú Bảo Anh"
+              placeholder="Họ và tên"
               autoComplete="name"
               aria-describedby={errors.fullName ? 'fullName-error' : undefined}
               aria-invalid={Boolean(errors.fullName)}
@@ -183,7 +180,6 @@ function Recommendation() {
               value={profile.favoriteAnimal}
               onChange={updateField}
               placeholder="Mèo"
-              list="animal-options"
               autoComplete="off"
               aria-describedby={
                 errors.favoriteAnimal ? 'favoriteAnimal-error' : undefined
@@ -192,11 +188,6 @@ function Recommendation() {
               disabled={isSubmitting}
               required
             />
-            <datalist id="animal-options">
-              {animalOptions.map((animal) => (
-                <option key={animal} value={animal} />
-              ))}
-            </datalist>
             {errors.favoriteAnimal ? (
               <p className="field-error" id="favoriteAnimal-error">
                 {errors.favoriteAnimal}
@@ -213,7 +204,6 @@ function Recommendation() {
               value={profile.favoriteColor}
               onChange={updateField}
               placeholder="Hồng"
-              list="color-options"
               autoComplete="off"
               aria-describedby={
                 errors.favoriteColor ? 'favoriteColor-error' : undefined
@@ -222,11 +212,6 @@ function Recommendation() {
               disabled={isSubmitting}
               required
             />
-            <datalist id="color-options">
-              {colorOptions.map((color) => (
-                <option key={color} value={color} />
-              ))}
-            </datalist>
             {errors.favoriteColor ? (
               <p className="field-error" id="favoriteColor-error">
                 {errors.favoriteColor}

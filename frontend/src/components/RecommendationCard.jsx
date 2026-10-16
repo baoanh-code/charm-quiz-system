@@ -1,27 +1,25 @@
-import { useState } from 'react';
 import { recommendationSourceLabels } from '../services/recommendationService';
+import CharmCard from './CharmCard';
 
-function RecommendationCard({ recommendation, symbol, fallback, position }) {
-  const [imageFailed, setImageFailed] = useState(false);
+function RecommendationCard({ recommendation, symbol, fallback, position, categoryLabel }) {
   const { charm, rank, displayOrder, source } = recommendation;
-  const imageUrl = charm.imageUrl;
 
   return (
-    <article className="result-card">
-      <div className="result-card__media">
-        {imageUrl && !imageFailed ? (
-          <img src={imageUrl} alt="" loading="lazy" onError={() => setImageFailed(true)} />
-        ) : (
-          <span className="result-card__symbol" aria-hidden="true">{symbol}</span>
-        )}
-      </div>
-      <div className="result-card__body">
-        <p className="result-card__rank">Gợi ý {rank ?? displayOrder ?? position}{fallback ? ' / Thay thế' : ''}</p>
-        <h3>{charm.name}</h3>
+    <div className="recommendation-card">
+      <p className="result-card__rank">
+        Gợi ý {rank ?? displayOrder ?? position}{fallback ? ' / Thay thế' : ''}
+      </p>
+      <CharmCard
+        charm={{ ...charm, availabilityStatus: charm.availabilityStatus ?? 'IN_STOCK' }}
+        categoryLabel={categoryLabel}
+        fallbackSymbol={symbol}
+        titleAs="h3"
+      />
+      <div className="recommendation-card__context">
         {source ? <p className="result-card__reason">{recommendationSourceLabels[source].reason}</p> : null}
         {source ? <p className="result-card__source">Nguồn: {recommendationSourceLabels[source].label}</p> : null}
       </div>
-    </article>
+    </div>
   );
 }
 

@@ -104,6 +104,15 @@ public class SupabaseManagerRecommendationRuleService {
         return patchRule(id, Map.of("status", status.name()));
     }
 
+    public void deleteRule(UUID id) {
+        String rawJson = execute(() -> restClient.delete()
+                .uri(ruleByIdUri(id))
+                .header("Prefer", "return=representation")
+                .retrieve()
+                .body(String.class));
+        exactlyOne(rawJson, true);
+    }
+
     private ManagerRecommendationRuleResponse getExistingManagedRule(UUID id) {
         String rawJson = execute(() -> restClient.get()
                 .uri(ruleByIdUri(id))
