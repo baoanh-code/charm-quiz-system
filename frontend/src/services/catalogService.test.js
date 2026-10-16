@@ -40,7 +40,30 @@ test('normalizes the exact catalog API contract and keeps out-of-stock charms vi
 });
 
 test('formats known catalog categories in Vietnamese without changing unknown data', () => {
-  assert.equal(formatCatalogCategory('Animals'), 'Động vật');
+  assert.deepEqual(
+    {
+      GENERAL: formatCatalogCategory('GENERAL'),
+      INITIAL: formatCatalogCategory('INITIAL'),
+      ANIMAL: formatCatalogCategory('ANIMAL'),
+      COLOR: formatCatalogCategory('COLOR'),
+      INTEREST: formatCatalogCategory('INTEREST'),
+      INTERESTS: formatCatalogCategory('INTERESTS'),
+      ZODIAC: formatCatalogCategory('ZODIAC'),
+      SPORT: formatCatalogCategory('SPORT'),
+      CULTURE: formatCatalogCategory('CULTURE'),
+    },
+    {
+      GENERAL: 'Gợi ý thêm',
+      INITIAL: 'Chữ cái đầu',
+      ANIMAL: 'Động vật',
+      COLOR: 'Màu sắc',
+      INTEREST: 'Sở thích',
+      INTERESTS: 'Sở thích',
+      ZODIAC: 'Cung hoàng đạo',
+      SPORT: 'Thể thao',
+      CULTURE: 'Văn hóa',
+    },
+  );
   assert.equal(formatCatalogCategory('music'), 'Âm nhạc');
   assert.equal(formatCatalogCategory('Bộ sưu tập Tết'), 'Bộ sưu tập Tết');
 });

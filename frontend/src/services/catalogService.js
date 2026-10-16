@@ -10,6 +10,8 @@ const categoryLabels = new Map([
   ['color', 'Màu sắc'],
   ['colors', 'Màu sắc'],
   ['culture', 'Văn hóa'],
+  ['general', 'Gợi ý thêm'],
+  ['initial', 'Chữ cái đầu'],
   ['interest', 'Sở thích'],
   ['interests', 'Sở thích'],
   ['letter', 'Chữ cái'],
