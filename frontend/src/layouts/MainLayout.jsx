@@ -17,9 +17,9 @@ function MainLayout() {
     <div className="app-layout">
       <header className="app-header" onKeyDown={handleHeaderKeyDown}>
         <div className="app-header__inner">
-          <NavLink className="app-brand" to="/" aria-label="Về trang chủ Your Charm Your Story" onClick={() => setMenuOpen(false)}>
+          <NavLink className="app-brand" to="/" aria-label="Về trang chủ Your Story Your Charm" onClick={() => setMenuOpen(false)}>
             <span className="brand-mark"><img src="/dong-son-drum.png" alt="" width="40" height="40" /></span>
-            <span>Your Charm Your Story</span>
+            <span>Your Story Your Charm</span>
           </NavLink>
 
           <button
@@ -52,7 +52,7 @@ function MainLayout() {
       </main>
 
       <footer className="app-footer">
-        <p>Your Charm Your Story</p>
+        <p>Your Story Your Charm</p>
       </footer>
     </div>
   );

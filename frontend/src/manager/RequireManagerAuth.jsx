@@ -36,7 +36,7 @@ function RequireManagerAuth() {
     <div className="manager-shell">
       <header className="manager-header">
         <div className="manager-header__inner">
-          <span className="manager-header__brand">Your Charm Your Story <span>Manager</span></span>
+          <span className="manager-header__brand">Your Story Your Charm <span>Manager</span></span>
           <nav className="manager-header__nav" aria-label="Manager navigation">
             <NavLink to="/manager" end>Charms</NavLink>
             <NavLink to="/manager/rules">Rules</NavLink>

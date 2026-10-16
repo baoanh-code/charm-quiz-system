@@ -41,7 +41,7 @@ function ManagerLogin() {
   return (
     <main className="manager-auth-page">
       <section className="manager-auth-panel" aria-labelledby="manager-login-title">
-        <p className="manager-eyebrow">Your Charm Your Story</p>
+        <p className="manager-eyebrow">Your Story Your Charm</p>
         <h1 id="manager-login-title">Manager sign in</h1>
         <form className="manager-login-form" onSubmit={handleSubmit} aria-busy={isSubmitting}>
           <div className="manager-field">
